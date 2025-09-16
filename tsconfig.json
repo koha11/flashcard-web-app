@@ -12,9 +12,9 @@
         "noEmit": true,
         "baseUrl": ".",
         "paths": {
-            "@/*": ["resources/js/*"],
-            "ziggy-js": ["./vendor/tightenco/ziggy"]
-        }
+            "@/*": ["resources/js/*"]
+        },
+        "types": ["vite/client", "ziggy-js"]
     },
     "include": [
         "resources/js/**/*.ts",
