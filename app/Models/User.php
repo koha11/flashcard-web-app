@@ -42,4 +42,29 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function flashcards()
+    {
+        return $this->hasMany(Flashcard::class);
+    }
+    public function ownedCollections()
+    {
+        return $this->hasMany(Collection::class, 'owner_id');
+    }
+    public function accessibleCollections()
+    {
+        return $this->belongsToMany(Collection::class, 'collection_access_users', 'user_id', 'collection_id')
+            ->withPivot('can_edit');
+    }
+    public function favoritedCollections()
+    {
+        return $this->belongsToMany(Collection::class, 'favorited_collections', 'user_id', 'collection_id')
+            ->withPivot('favorited_date');
+    }
+    public function recentCollections()
+    {
+        return $this->belongsToMany(Collection::class, 'recent_collections', 'user_id', 'collection_id')
+            ->withPivot('viewed_date');
+    }
+
 }

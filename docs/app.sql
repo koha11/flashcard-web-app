@@ -1,0 +1,2 @@
+use flashcard;
+create table 

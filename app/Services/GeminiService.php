@@ -14,7 +14,7 @@ class GeminiService
   {
     $this->apiKey = config('services.gemini.key', env('GEMINI_API_KEY'));
     $this->base = rtrim(config('services.gemini.base', env('GEMINI_BASE', 'https://generativelanguage.googleapis.com/v1beta')), '/');
-    $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash'));
+    $this->model = config('services.gemini.model', env('GEMINI_MODEL', 'gemini-2.5-flash-lite'));
   }
 
   public function generate(array $contents, array $options = []): array
@@ -28,7 +28,7 @@ class GeminiService
       'safetySettings' => $options['safety'] ?? null,
     ], fn($v) => !is_null($v));
 
-    $resp = Http::timeout(60)
+    $resp = Http::timeout(seconds: 120)
       ->withHeaders(['Content-Type' => 'application/json'])
       ->post($endpoint . "?key={$this->apiKey}", $payload);
 

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PostParagraphRequest;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use PhpParser\Error;
 
 class ParagraphController extends Controller
@@ -42,6 +41,6 @@ class ParagraphController extends Controller
 
         $data = json_decode($answer, true);
 
-        return Inertia::render("Demo/FlashcardList", ["items" => $data]);
+        return json_encode(compact('data'));
     }
 }
