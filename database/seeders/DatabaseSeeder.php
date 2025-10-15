@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
   {
     $this->call([
       FlashcardSeeder::class,
+      CollectionSeeder::class
       // (and your Collection seeder if you want links)
     ]);
   }

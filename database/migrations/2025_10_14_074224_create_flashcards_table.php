@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->softDeletes();                 // ← merged in
             $table->timestamps();
 
-            $table->index(['user_id']);            // keep any indexes you need
+            $table->index(columns: ['user_id']);            // keep any indexes you need
         });
     }
 
