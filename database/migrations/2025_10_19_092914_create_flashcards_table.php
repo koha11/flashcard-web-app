@@ -9,15 +9,15 @@ return new class extends Migration {
     {
         Schema::create('flashcards', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete()->restrictOnUpdate();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->restrictOnUpdate();
             $table->string('front_side');
-            $table->string('back_side');
-            $table->string('tags')->nullable()->comment('CSV e.g. "English,Dev,Remote job"');
-            $table->softDeletes();                 // ← merged in
+            $table->text('back_side');
+            $table->string('tags')->nullable(); // "English,Dev,Remote job"
             $table->timestamps();
-
-            $table->index(columns: ['user_id']);            // keep any indexes you need
+            $table->softDeletes(); // <— NEW
+            $table->index('user_id');
         });
+
     }
 
     public function down(): void

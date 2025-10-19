@@ -2,50 +2,63 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreCollectionRequest;
-use App\Http\Requests\UpdateCollectionRequest;
+use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CollectionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $query = Collection::query()
+            ->when($request->filled('owner_id'), fn($q) => $q->where('owner_id', $request->integer('owner_id')))
+            ->when(
+                $request->filled('access_level'),
+                fn($q) =>
+                $q->where('access_level', $request->string('access_level')->toString())
+            );
+
+        return CollectionResource::collection($query->latest()->paginate());
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreCollectionRequest $request)
+    public function store(Request $request)
     {
-        $collection = Collection::create($request->validated() + ['owner_id' => auth()->id()]);
-        return $collection;
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'tags' => ['sometimes', 'nullable', 'string'],
+            'owner_id' => ['nullable', 'exists:users,id'],
+            'access_level' => ['sometimes', Rule::in(['private', 'public', 'restrict'])],
+        ]);
+
+        $data['owner_id'] = $data['owner_id'] ?? $request->user()->id ?? null;
+        $collection = Collection::create($data);
+
+        return new CollectionResource($collection);
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Collection $collection)
     {
-        //
+        return new CollectionResource($collection);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateCollectionRequest $request, Collection $collection)
+    public function update(Request $request, Collection $collection)
     {
-        //
+        $data = $request->validate([
+            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'tags' => ['sometimes', 'nullable', 'string'],
+            'access_level' => ['sometimes', 'required', Rule::in(['private', 'public', 'restrict'])],
+            'owner_id' => ['prohibited'], // avoid changing ownership via API
+        ]);
+
+        $collection->update($data);
+
+        return new CollectionResource($collection->fresh());
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Collection $collection)
     {
-        //
+        $collection->delete(); // hard delete (no softDeletes on this table)
+        return response()->noContent();
     }
 }

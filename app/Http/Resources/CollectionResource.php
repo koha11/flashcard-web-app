@@ -2,18 +2,24 @@
 
 namespace App\Http\Resources;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CollectionResource extends JsonResource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @return array<string, mixed>
-     */
-    public function toArray(Request $request): array
-    {
-        return parent::toArray($request);
-    }
+  public function toArray($request): array
+  {
+    return [
+      'id' => $this->id,
+      'name' => $this->name,
+      'tags' => $this->tags,
+      'owner_id' => $this->owner_id,
+      'access_level' => $this->access_level,
+      'played_count' => $this->played_count,
+      'favorited_count' => $this->favorited_count,
+      'created_at' => $this->created_at,
+      'updated_at' => $this->updated_at,
+      // Optional: small summary of relations
+      'flashcards_count' => $this->whenLoaded('flashcards', fn() => $this->flashcards->count()),
+    ];
+  }
 }

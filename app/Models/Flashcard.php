@@ -4,11 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Flashcard extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'user_id',
@@ -17,31 +17,19 @@ class Flashcard extends Model
         'tags',
     ];
 
-    // Accessor/Mutator for tags as array <-> CSV string
-    protected function tagsArray(): Attribute
-    {
-        return Attribute::make(
-            get: fn() => $this->tags
-            ? array_values(array_filter(array_map('trim', explode(',', (string) $this->tags))))
-            : [],
-            set: fn($value) => is_array($value) ? implode(',', $value) : $value
-        );
-    }
-
-    /** Relationships */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // public function collections()
-    // {
-    //     return $this->belongsToMany(Collection::class, 'collection_flashcard', 'flashcard_id', 'collection_id');
-    // }
+    public function collections()
+    {
+        return $this->belongsToMany(Collection::class, 'collection_flashcard')
+            ->withTimestamps();
+    }
 
-    /** Scopes */
-    // public function scopeNotDeleted($q)
-    // {
-    //     return $q->where('deleted', false);
-    // }
+    public function reports()
+    {
+        return $this->hasMany(ReportedFlashcard::class);
+    }
 }
