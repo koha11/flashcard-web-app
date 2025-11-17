@@ -4,11 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
+use App\Services\CollectionService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CollectionController extends Controller
 {
+    protected CollectionService $service;
+
+    
+    public function __construct(CollectionService $service)
+    {
+        $this->service = $service;
+    }
+
     public function index(Request $request)
     {
         $query = Collection::query()
@@ -32,9 +41,7 @@ class CollectionController extends Controller
         ]);
 
         $data['owner_id'] = $data['owner_id'] ?? $request->user()->id ?? null;
-        $collection = Collection::create($data);
-
-        return new CollectionResource($collection);
+        return $this->service->create($data);
     }
 
     public function show(Collection $collection)

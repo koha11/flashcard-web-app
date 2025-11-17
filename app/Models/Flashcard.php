@@ -11,16 +11,11 @@ class Flashcard extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'user_id',
-        'front_side',
-        'back_side',
-        'tags',
+        'term',
+        'definition',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
+   
 
     public function collections()
     {

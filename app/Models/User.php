@@ -43,10 +43,7 @@ class User extends Authenticatable
         'password' => 'hashed',
     ];
 
-    public function flashcards()
-    {
-        return $this->hasMany(Flashcard::class);
-    }
+  
     public function ownedCollections()
     {
         return $this->hasMany(Collection::class, 'owner_id');
