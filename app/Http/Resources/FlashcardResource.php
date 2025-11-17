@@ -10,14 +10,10 @@ class FlashcardResource extends JsonResource
   {
     return [
       'id' => $this->id,
-      'user_id' => $this->user_id,
-      'front_side' => $this->front_side,
-      'back_side' => $this->back_side,
-      'tags' => $this->tags,
+      'term' => $this->term,
+      'definition' => $this->definition,
       'created_at' => $this->created_at,
       'updated_at' => $this->updated_at,
-      'deleted_at' => $this->whenNotNull($this->deleted_at), // useful in admin views
     ];
-
   }
 }

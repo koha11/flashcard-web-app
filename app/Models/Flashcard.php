@@ -15,16 +15,9 @@ class Flashcard extends Model
         'definition',
     ];
 
-   
-
     public function collections()
     {
         return $this->belongsToMany(Collection::class, 'collection_flashcard')
             ->withTimestamps();
-    }
-
-    public function reports()
-    {
-        return $this->hasMany(ReportedFlashcard::class);
     }
 }
