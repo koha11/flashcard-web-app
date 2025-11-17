@@ -25,77 +25,16 @@ class CollectionController extends Controller
     {
         $userId = $request->user()?->id;
 
-        $query = Collection::query()
-            ->with('flashcards')
-            // Filter by owner explicitly (owned-by=123)
-            ->when(
-                $request->filled('owned-by'),
-                fn($q) => $q->where('owner_id', $request->integer('owned-by'))
-            )
-            // Filter by tags (tags=tag1,tag2,...)
-            ->when(
-                $request->filled('tags'),
-                function ($q) use ($request) {
-                    $tags = explode(',', $request->string('tags')->toString());
+        $data = $this->service->getAll(
+            $request->query('owned-by'),
+            $request->query('tags'),
+            $request->query('type'),
+            $userId,
+            $request->query('sort-by', 'date'),
+            $request->query('sort-type', 'desc')
+        );
 
-                    $q->where(function ($inner) use ($tags) {
-                        foreach ($tags as $tag) {
-                            $tag = trim($tag);
-                            if ($tag === '') {
-                                continue;
-                            }
-                            // adjust if you store tags differently
-                            $inner->orWhere('tags', 'like', "%{$tag}%");
-                        }
-                    });
-                }
-            );
-
-        // Handle "type" filter
-        $type = $request->string('type')->toString();
-
-        $query
-            // collections owned by current user
-            ->when($type === 'owned' && $userId, fn($q) => $q->where('owner_id', $userId))
-            // public collections
-            ->when($type === 'public', fn($q) => $q->where('access_level', 'public'))
-            // shared with me (simplified: access_level = 'shared')
-            ->when($type === 'shared with me', fn($q) => $q->where('access_level', 'shared'));
-        // "recently" and "favorited" we’ll treat mainly as sort, not filter
-
-        // Sorting
-        $sortBy = $request->string('sort-by')->toString() ?: 'date';
-        $sortType = strtolower($request->string('sort-type')->toString() ?: 'desc');
-
-        if (!in_array($sortType, ['asc', 'desc'], true)) {
-            $sortType = 'desc';
-        }
-
-        switch ($sortBy) {
-            case 'views':
-                // assumes you have a 'views_count' column
-                $query->orderBy('views_count', $sortType);
-                break;
-
-            case 'favorite':
-                // assumes you have a 'favorites_count' column
-                $query->orderBy('favorites_count', $sortType);
-                break;
-
-            case 'date':
-            default:
-                // for "recently" we usually want newest first
-                $query->orderBy('created_at', $sortType);
-                break;
-        }
-
-        // If type = recently and no explicit sort-by was provided,
-        // you can force date DESC:
-        if ($type === 'recently' && !$request->filled('sort-by')) {
-            $query->reorder()->orderBy('created_at', 'desc');
-        }
-
-        return CollectionResource::collection($query->paginate());
+        return CollectionResource::collection($data);
     }
 
     public function store(Request $request)
