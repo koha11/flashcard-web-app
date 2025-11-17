@@ -8,31 +8,29 @@ use App\Http\Controllers\HealthController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\FlashcardController;
 
+Route::prefix('collections')->group(function () {
+    Route::get('/', [CollectionController::class, 'index']);
+    Route::get('/{collection}', [CollectionController::class, 'show']);
 
+    Route::post('/new', [CollectionController::class, 'store']);
+    Route::post('/extract-paragraph', [CollectionController::class, 'extract']);
 
-Route::prefix('v1')->group(function () {
-    Route::apiResource('flashcards', FlashcardController::class);
+    Route::put('/{collection}/edit', [CollectionController::class, 'update']);
 
-    Route::get('flashcards/trashed', [FlashcardController::class, 'trashed'])->name('flashcards.trashed');
-    Route::post('flashcards/{id}/restore', [FlashcardController::class, 'restore'])->name('flashcards.restore');
-    Route::delete('flashcards/{id}/force', [FlashcardController::class, 'forceDelete'])->name('flashcards.force-delete');
-
-
-    // CRUD
-    Route::apiResource('collections', CollectionController::class);
-
-    // Soft-delete helpers
-    Route::get('collections/trashed', [CollectionController::class, 'trashed'])->name('collections.trashed');
-    Route::post('collections/{id}/restore', [CollectionController::class, 'restore'])->name('collections.restore');
-    Route::delete('collections/{id}/force', [CollectionController::class, 'forceDelete'])->name('collections.force-delete');
-
-    // Relationship: collections ↔ flashcards
-    Route::get('collections/{collection}/flashcards', [CollectionFlashcardController::class, 'index'])
-        ->name('collections.flashcards.index');
-    Route::post('collections/{collection}/flashcards/{flashcard}', [CollectionFlashcardController::class, 'attach'])
-        ->name('collections.flashcards.attach');
-    Route::delete('collections/{collection}/flashcards/{flashcard}', [CollectionFlashcardController::class, 'detach'])
-        ->name('collections.flashcards.detach');
-    Route::post('collections/{collection}/flashcards/sync', [CollectionFlashcardController::class, 'sync'])
-        ->name('collections.flashcards.sync');
+    Route::delete("/{collection}/remove", [CollectionController::class, 'destroy']);
 });
+
+// // Soft-delete helpers
+// Route::get('collections/trashed', [CollectionController::class, 'trashed'])->name('collections.trashed');
+// Route::post('collections/{id}/restore', [CollectionController::class, 'restore'])->name('collections.restore');
+// Route::delete('collections/{id}/force', [CollectionController::class, 'forceDelete'])->name('collections.force-delete');
+
+// Relationship: collections ↔ flashcards
+// Route::get('collections/{collection}', [CollectionFlashcardController::class, 'index'])
+//     ->name('collections.flashcards.index');
+// Route::post('collections/{collection}/flashcards/{flashcard}', [CollectionFlashcardController::class, 'attach'])
+//     ->name('collections.flashcards.attach');
+// Route::delete('collections/{collection}/flashcards/{flashcard}', [CollectionFlashcardController::class, 'detach'])
+//     ->name('collections.flashcards.detach');
+// Route::post('collections/{collection}/flashcards/sync', [CollectionFlashcardController::class, 'sync'])
+//     ->name('collections.flashcards.sync');
