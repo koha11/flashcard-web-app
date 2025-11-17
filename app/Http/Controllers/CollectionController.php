@@ -20,15 +20,16 @@ class CollectionController extends Controller
 
     public function index(Request $request)
     {
-        $query = Collection::query()
-            ->when($request->filled('owner_id'), fn($q) => $q->where('owner_id', $request->integer('owner_id')))
-            ->when(
-                $request->filled('access_level'),
-                fn($q) =>
-                $q->where('access_level', $request->string('access_level')->toString())
-            );
+        // $query = Collection::query()
+        //     ->when($request->filled('owner_id'), fn($q) => $q->where('owner_id', $request->integer('owner_id')))
+        //     ->when(
+        //         $request->filled('access_level'),
+        //         fn($q) =>
+        //         $q->where('access_level', $request->string('access_level')->toString())
+        //     );
 
-        return CollectionResource::collection($query->latest()->paginate());
+        // return CollectionResource::collection($query->latest()->paginate());
+        return $this->service->getAll();
     }
 
     public function store(Request $request)

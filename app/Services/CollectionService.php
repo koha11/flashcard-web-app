@@ -8,7 +8,8 @@ class CollectionService
 {
   public function getAll()
   {
-    return Collection::latest()->get();
+    return Collection::withCount('flashcards')->with('owner')->
+    latest()->get();
   }
 
   public function create(array $data)
