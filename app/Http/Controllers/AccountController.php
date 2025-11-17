@@ -42,9 +42,7 @@ class AccountController extends Controller
   public function update(Request $request, Account $account)
   {
     $data = $request->validate([
-      'email' => ['sometimes', 'email', 'unique:accounts,email,' . $account->id],
-      'password' => ['sometimes', 'min:6'],
-      'email_verified_at' => ['nullable', 'date'],
+      'password' => ['required', 'min:6'],
     ]);
 
     return $this->service->update($account, $data);

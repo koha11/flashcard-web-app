@@ -29,11 +29,9 @@ class AccountService
 
   public function update(Account $account, array $data)
   {
-    if (isset($data['password'])) {
-      $data['password'] = Hash::make($data['password']);
-    }
-
+    $data['password'] = Hash::make($data['password']);
     $account->update($data);
+    
 
     return $account->fresh();
   }
