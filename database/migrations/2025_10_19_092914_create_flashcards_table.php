@@ -9,13 +9,10 @@ return new class extends Migration {
     {
         Schema::create('flashcards', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete()->restrictOnUpdate();
-            $table->string('front_side');
-            $table->text('back_side');
-            $table->string('tags')->nullable(); // "English,Dev,Remote job"
+            $table->string('term');
+            $table->text('definition');
             $table->timestamps();
             $table->softDeletes(); // <— NEW
-            $table->index('user_id');
         });
 
     }
