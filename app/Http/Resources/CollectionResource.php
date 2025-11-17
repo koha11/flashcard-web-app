@@ -19,7 +19,9 @@ class CollectionResource extends JsonResource
       'created_at' => $this->created_at,
       'updated_at' => $this->updated_at,
       // Optional: small summary of relations
-      'flashcards_count' => $this->whenLoaded('flashcards', fn() => $this->flashcards->count()),
+      'flashcards' => FlashcardResource::collection(
+        $this->whenLoaded('flashcards')
+      ),
     ];
   }
 }
