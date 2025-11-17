@@ -9,7 +9,6 @@ class FlashcardSeeder extends Seeder
 {
   public function run(): void
   {
-    Flashcard::factory()->count(20)->create();
-    Flashcard::inRandomOrder()->take(3)->get()->each->delete();
+    Flashcard::factory()->count(40)->create();
   }
 }

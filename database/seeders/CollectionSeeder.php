@@ -11,44 +11,65 @@ class CollectionSeeder extends Seeder
 {
   public function run(): void
   {
-    // Create some owners
+    /** 
+    * 1. Create owners
+    */
     $owners = User::factory()->count(3)->create();
 
-    // Create collections for each owner
-    $collections = $owners->flatMap(
-      fn($owner) =>
-      Collection::factory()->count(3)->create(['owner_id' => $owner->id])
-    );
-
-    // Create flashcards (some for each owner)
-    $flashcards = Flashcard::factory()->count(30)->create();
-
-    // Attach flashcards randomly to collections
-    $collections->each(function (Collection $c) use ($flashcards) {
-      $ids = $flashcards->random(rand(5, 12))->pluck('id');
-      $c->flashcards()->syncWithoutDetaching($ids);
+    /** 
+    * 2. Create collections
+    */
+    $collections = $owners->flatMap(function ($owner) {
+      return Collection::factory()
+        ->count(3)
+        ->create(['owner_id' => $owner->id]);
     });
 
-    // Access users / favorites / recents (examples)
+    /**
+    * 3. Create flashcards
+    */
+    $flashcards = Flashcard::factory()->count(30)->create();
+
+    /**
+    * 4. Assign flashcards for collection
+    */
+    $collections->each(function (Collection $collection) use ($flashcards) {
+      $collection->flashcards()->syncWithoutDetaching(
+        $flashcards->random(rand(5, 12))->pluck('id')->toArray()
+      );
+    });
+
+    /**
+    * 5. Users for access / favorites / recents
+    */
     $users = User::factory()->count(5)->create();
 
-    foreach ($collections as $c) {
-      // grant access to some users
-      $usersGrant = $users->random(rand(1, 3));
-      foreach ($usersGrant as $u) {
-        $c->accessUsers()->syncWithoutDetaching([$u->id => ['can_edit' => (bool) rand(0, 1)]]);
+    /**
+    * 6. Gán quyền truy cập + favorite + recent
+    */
+    foreach ($collections as $collection) {
+      // grant access random users
+      $grantUsers = $users->random(rand(1, 3));
+      foreach ($grantUsers as $u) {
+        $collection->accessUsers()->syncWithoutDetaching([
+          $u->id => ['can_edit' => (bool) rand(0, 1)]
+        ]);
       }
 
       // favorites
-      $usersFav = $users->random(rand(1, 4));
-      foreach ($usersFav as $u) {
-        $c->favorites()->syncWithoutDetaching([$u->id => ['favorited_date' => now()->subDays(rand(0, 10))]]);
+      $favoriteUsers = $users->random(rand(1, 4));
+      foreach ($favoriteUsers as $u) {
+        $collection->favorites()->syncWithoutDetaching([
+          $u->id => ['favorited_date' => now()->subDays(rand(0, 10))]
+        ]);
       }
 
       // recents
-      $usersRecent = $users->random(rand(1, 4));
-      foreach ($usersRecent as $u) {
-        $c->recents()->syncWithoutDetaching([$u->id => ['viewed_date' => now()->subDays(rand(0, 5))]]);
+      $recentUsers = $users->random(rand(1, 4));
+      foreach ($recentUsers as $u) {
+        $collection->recents()->syncWithoutDetaching([
+          $u->id => ['viewed_date' => now()->subDays(rand(0, 5))]
+        ]);
       }
     }
   }

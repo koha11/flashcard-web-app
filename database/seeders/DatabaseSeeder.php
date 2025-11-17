@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
 
     $this->call([
       CollectionSeeder::class,
+      UserSeeder::class,
       FlashcardSeeder::class, // optional if CollectionSeeder already creates many
     ]);
   }

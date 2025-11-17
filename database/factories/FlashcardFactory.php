@@ -13,10 +13,8 @@ class FlashcardFactory extends Factory
     public function definition(): array
     {
         return [
-            'user_id' => User::factory(),
-            'front_side' => ucfirst($this->faker->words(2, true)),
-            'back_side' => $this->faker->sentence(10),
-            'tags' => 'English,Dev,Remote job',
+            'term' => ucfirst($this->faker->words(2, true)),
+            'definition' => $this->faker->sentence(10),
         ];
     }
 }
