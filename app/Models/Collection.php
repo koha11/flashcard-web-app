@@ -13,6 +13,7 @@ class Collection extends Model
     protected $fillable = [
         'name',
         'tags',
+        'description',
         'owner_id',
         'access_level',
         'played_count',
