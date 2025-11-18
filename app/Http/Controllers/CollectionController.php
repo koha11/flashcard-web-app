@@ -107,13 +107,17 @@ class CollectionController extends Controller
     {
         $data = $request->validate([
             'flashcard_id' => ['required', 'exists:flashcards,id'],
-            'term' => ['sometimes', 'required', 'string', 'max:255'],
-            'definition' => ['sometimes', 'required', 'string'],
+            'term' => ['required', 'string', 'max:255'],
+            'definition' => ['required', 'string'],
         ]);
 
-        $flashcard = $collection->flashcards()->where('flashcards.id', $data['flashcard_id'])->firstOrFail();
-
-        $flashcard->update($data);
+        $flashcard = $this->flashcardService->update(
+            $collection->flashcards()->where('flashcards.id', $data['flashcard_id'])->firstOrFail(),
+            [
+                'term' => $data['term'],
+                'definition' => $data['definition'],
+            ]
+        );
 
         return response()->json(['flashcard' => $flashcard->fresh()]);
     }
