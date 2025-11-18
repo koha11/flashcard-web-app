@@ -20,7 +20,7 @@ Route::prefix('collections')->group(function () {
     Route::put('/{collection}/edit-flashcard', action: [CollectionController::class, 'updateFlashcard']);
 
     Route::delete("/{collection}/remove", [CollectionController::class, 'destroy']);
-    Route::delete("/{collection}/remove-flashcard", [CollectionController::class, 'destroyFlashcard']);
+    Route::delete("/{collection}/remove-flashcard/{flashcard_id}", [CollectionController::class, 'destroyFlashcard']);
 });
 
 // // Soft-delete helpers

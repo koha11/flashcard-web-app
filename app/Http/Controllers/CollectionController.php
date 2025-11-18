@@ -112,7 +112,7 @@ class CollectionController extends Controller
         ]);
 
         $flashcard = $this->flashcardService->update(
-            $collection->flashcards()->where('flashcards.id', $data['flashcard_id'])->firstOrFail(),
+            $data['flashcard_id'],
             [
                 'term' => $data['term'],
                 'definition' => $data['definition'],
@@ -122,15 +122,12 @@ class CollectionController extends Controller
         return response()->json(['flashcard' => $flashcard->fresh()]);
     }
 
-    public function destroyFlashcard(Request $request, Collection $collection)
+    public function destroyFlashcard(Collection $collection, $flashcard_id)
     {
-        $data = $request->validate([
-            'flashcard_id' => ['required', 'exists:flashcards,id'],
-        ]);
 
-        $flashcard = $collection->flashcards()->where('flashcards.id', $data['flashcard_id'])->firstOrFail();
+        $this->service->removeFlashcard($collection, $flashcard_id);
 
-        $collection->flashcards()->detach($flashcard->id);
+        $this->flashcardService->delete($flashcard_id);
 
         return response()->noContent();
     }

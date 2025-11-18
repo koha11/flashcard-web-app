@@ -12,14 +12,16 @@ class FlashcardService
     return Flashcard::create($data);
   }
 
-  public function update(Flashcard $flashcard, array $data)
+  public function update($flashcard_id, array $data)
   {
+    $flashcard = Flashcard::findOrFail($flashcard_id);
     $flashcard->update($data);
     return $flashcard->fresh();
   }
 
-  public function delete(Flashcard $flashcard)
+  public function delete($flashcard_id)
   {
+    $flashcard = Flashcard::findOrFail($flashcard_id);
     return $flashcard->delete();
   }
 }
