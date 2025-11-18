@@ -25,3 +25,6 @@ class FlashcardService
     return $flashcard->delete();
   }
 }
+
+?>
+
