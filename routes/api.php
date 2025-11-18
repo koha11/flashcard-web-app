@@ -11,8 +11,7 @@ use App\Http\Controllers\FlashcardController;
 Route::prefix('collections')->group(function () {
     Route::get('/', [CollectionController::class, 'index']);
     Route::get('/{collection}', [CollectionController::class, 'show']);
-
-    Route::post('/new', [CollectionController::class, 'store']);
+    Route::post('/', [CollectionController::class, 'store']);
     Route::post('/extract-paragraph', [CollectionController::class, 'extract']);
 
     Route::put('/{collection}/edit', [CollectionController::class, 'update']);

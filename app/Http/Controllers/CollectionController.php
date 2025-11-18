@@ -42,11 +42,15 @@ class CollectionController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'tags' => ['sometimes', 'nullable', 'string'],
+            'description' => ['sometimes', 'nullable', 'string'],
             'owner_id' => ['nullable', 'exists:users,id'],
             'access_level' => ['sometimes', Rule::in(['private', 'public', 'shared'])],
+            'flashcards' => ['required', 'array'],
+            'flashcards.*.term' => ['required', 'string', 'max:50'],
+            'flashcards.*.definition' => ['required', 'string', 'max:50'],
         ]);
-
-        $data['owner_id'] = $data['owner_id'] ?? $request->user()->id ?? null;
+        // Test create collection with default onwer_id = 1
+        $data['owner_id'] = $data['owner_id'] ?? $request->user()->id ?? 1;
 
         return $this->service->create($data);
     }
@@ -64,11 +68,14 @@ class CollectionController extends Controller
             'tags' => ['sometimes', 'nullable', 'string'],
             'access_level' => ['sometimes', 'required', Rule::in(['private', 'public', 'shared'])],
             'owner_id' => ['prohibited'], // avoid changing ownership via API
+            'flashcards' => ['required', 'array'],
+            'flashcards.*.term' => ['required', 'string', 'max:50'],
+            'flashcards.*.definition' => ['required', 'string', 'max:50'],
         ]);
 
-        $collection->update($data);
+        $result = $this->service->update($collection, $data);
 
-        return new CollectionResource($collection->fresh());
+        return $result;
     }
 
     public function destroy(Collection $collection)

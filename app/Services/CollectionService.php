@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
+use App\Models\Flashcard;
 
 class CollectionService
 {
@@ -95,13 +96,55 @@ class CollectionService
 
   public function create(array $data)
   {
-    return Collection::create($data);
+    $flashcards = $data['flashcards'] ?? [];
+    unset($data['flashcards']);
+
+    $collection = Collection::create($data);
+
+    if(!empty($flashcards)) {
+      $flashcardIds = [];
+
+      foreach ($flashcards as $fc) {
+        $flashcard = Flashcard::create([
+          'term' => $fc['term'],
+          'definition' => $fc['definition'],    
+        ]);
+        $flashcardIds[] = $flashcard->id;
+      }
+      $collection->flashcards()->attach($flashcardIds);
+    }
+    return $collection->load('flashcards');
   }
 
   public function update(Collection $collection, array $data)
   {
     $collection->update($data);
-    return $collection->fresh();
+
+    $flashcards = $data['flashcards'] ?? [];
+
+    if(!empty($flashcards)) {
+      $flashcardIds = [];
+      foreach ($flashcards as $fc) {
+        if (isset($fc['id'])) {
+          $flashcard = Flashcard::find($fc['id']);
+            $flashcard->update([
+                'term' => $fc['term'],
+                'definition' => $fc['definition'],
+            ]);
+          $flashcardIds[] = $flashcard->id;
+
+        } else {
+          $flashcard = Flashcard::create([
+            'term' => $fc['term'],
+            'definition' => $fc['definition'],
+          ]);
+          $flashcardIds[] = $flashcard->id;
+        }
+      }
+    }
+
+    $collection->flashcards()->sync($flashcardIds);
+    return $collection->load('flashcards');
   }
 
   public function delete(Collection $collection)
