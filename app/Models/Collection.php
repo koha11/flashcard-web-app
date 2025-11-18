@@ -33,8 +33,7 @@ class Collection extends Model
 
     public function accessUsers()
     {
-        return $this->belongsToMany(User::class, 'collection_access_users')
-            ->withPivot('can_edit');
+        return $this->belongsToMany(User::class, 'collection_access_users');
     }
 
     public function favorites()

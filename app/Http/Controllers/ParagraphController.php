@@ -18,7 +18,7 @@ class ParagraphController extends Controller
         $config = [
             "system" => [
                 "parts" => [
-                    "text" => "Bạn có nhiệm vụ giúp người dùng trích xuất các từ mới từ đoạn văn bản được cung cấp (đoạn văn bản đó có thể bằng bất kỳ ngôn ngữ nào), trả về dạng JSON với 2 key front là từ gốc trong văn bản, back là nghĩa của từ đó bằng tiếng việt."
+                    "text" => "Bạn có nhiệm vụ giúp người dùng trích xuất các từ mới từ đoạn văn bản được cung cấp (đoạn văn bản đó có thể bằng bất kỳ ngôn ngữ nào), trả về dạng JSON với 2 key term là từ gốc trong văn bản, definition là nghĩa của từ đó bằng tiếng việt."
                 ]
             ],
             "config" => [
@@ -28,8 +28,8 @@ class ParagraphController extends Controller
                     "items" => [
                         "type" => "OBJECT",
                         "properties" => [
-                            "front" => ["type" => "STRING"],
-                            "back" => ["type" => "STRING"]
+                            "term" => ["type" => "STRING"],
+                            "definition" => ["type" => "STRING"]
                         ],
                         "propertyOrdering" => ["front", "back"]
                     ]
