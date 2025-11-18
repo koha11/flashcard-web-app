@@ -90,7 +90,7 @@ class CollectionController extends Controller
 
         $flashcardIds = [];
         $newFlashcards = [];
-        
+
         foreach ($data['flashcards'] as $flashcardData) {
             $flashcard = $this->flashcardService->create($flashcardData);
             $newFlashcards[] = $flashcard;
@@ -100,8 +100,6 @@ class CollectionController extends Controller
         $this->service->addFlashcard($collection, $flashcardIds);
 
         // Return the newly added flashcards
-        $newFlashcards = $collection->flashcards()->whereIn('flashcards.id', $flashcardIds)->get();
-
         return response()->json(['flashcards' => $newFlashcards]);
     }
 
