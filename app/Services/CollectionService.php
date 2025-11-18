@@ -10,7 +10,7 @@ class CollectionService
   public function getAll($ownedBy, $tags, $type, $userId, $sortBy = 'date', $sortType = 'desc')
   {
     $query = Collection::query()
-      ->with('flashcards') // eager-load flashcards if you want them in resource
+      ->withCount('flashcards') // eager-load flashcards if you want them in resource
       // filter by explicit owner (owned-by param)
       ->when($ownedBy, function ($q) use ($ownedBy) {
         $q->where('owner_id', $ownedBy);
@@ -76,7 +76,21 @@ class CollectionService
         break;
     }
 
-    return $query->paginate();
+    return $query->get();
+  }
+
+  public function getById($id) {
+    $collection = Collection::with([
+      'owner',
+      'flashcards',
+        ])
+        ->withCount([
+            'flashcards',
+            'favorites',
+            'recents',
+        ])
+        ->findOrFail($id);
+    return $collection;
   }
 
   public function create(array $data)

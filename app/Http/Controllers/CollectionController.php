@@ -34,7 +34,7 @@ class CollectionController extends Controller
             $request->query('sort-type', 'desc')
         );
 
-        return CollectionResource::collection($data);
+        return $data;
     }
 
     public function store(Request $request)
@@ -51,9 +51,10 @@ class CollectionController extends Controller
         return $this->service->create($data);
     }
 
-    public function show(Collection $collection)
+    public function show($id)
     {
-        return new CollectionResource($collection);
+        $collection = $this->service->getById($id);
+        return $collection;
     }
 
     public function update(Request $request, Collection $collection)
