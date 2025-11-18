@@ -14,10 +14,13 @@ Route::prefix('collections')->group(function () {
 
     Route::post('/new', [CollectionController::class, 'store']);
     Route::post('/extract-paragraph', [CollectionController::class, 'extract']);
+    Route::post('/{collection}/add-flashcards', [CollectionController::class, 'storeFlashcards']);
 
     Route::put('/{collection}/edit', [CollectionController::class, 'update']);
+    Route::put('/{collection}/edit-flashcard', action: [CollectionController::class, 'updateFlashcard']);
 
     Route::delete("/{collection}/remove", [CollectionController::class, 'destroy']);
+    Route::delete("/{collection}/remove-flashcard", [CollectionController::class, 'destroyFlashcard']);
 });
 
 // // Soft-delete helpers

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
 use App\Services\CollectionService;
+use App\Services\FlashcardService;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -15,10 +16,14 @@ class CollectionController extends Controller
 
     protected GeminiService $geminiService;
 
-    public function __construct(CollectionService $service, GeminiService $geminiService)
+    protected FlashcardService $flashcardService;
+
+
+    public function __construct(CollectionService $service, GeminiService $geminiService, FlashcardService $flashcardService)
     {
         $this->service = $service;
         $this->geminiService = $geminiService;
+        $this->flashcardService = $flashcardService;
     }
 
     public function index(Request $request)
@@ -72,6 +77,59 @@ class CollectionController extends Controller
     public function destroy(Collection $collection)
     {
         $collection->delete(); // hard delete (no softDeletes on this table)
+        return response()->noContent();
+    }
+
+    public function storeFlashcards(Request $request, Collection $collection)
+    {
+        $data = $request->validate([
+            'flashcards' => ['required', 'array', 'min:1'],
+            'flashcards.*.term' => ['required', 'string', 'max:255'],
+            'flashcards.*.definition' => ['required', 'string'],
+        ]);
+
+        $flashcardIds = [];
+        $newFlashcards = [];
+        
+        foreach ($data['flashcards'] as $flashcardData) {
+            $flashcard = $this->flashcardService->create($flashcardData);
+            $newFlashcards[] = $flashcard;
+            $flashcardIds[] = $flashcard->id;
+        }
+
+        $this->service->addFlashcard($collection, $flashcardIds);
+
+        // Return the newly added flashcards
+        $newFlashcards = $collection->flashcards()->whereIn('flashcards.id', $flashcardIds)->get();
+
+        return response()->json(['flashcards' => $newFlashcards]);
+    }
+
+    public function updateFlashcard(Request $request, Collection $collection)
+    {
+        $data = $request->validate([
+            'flashcard_id' => ['required', 'exists:flashcards,id'],
+            'term' => ['sometimes', 'required', 'string', 'max:255'],
+            'definition' => ['sometimes', 'required', 'string'],
+        ]);
+
+        $flashcard = $collection->flashcards()->where('flashcards.id', $data['flashcard_id'])->firstOrFail();
+
+        $flashcard->update($data);
+
+        return response()->json(['flashcard' => $flashcard->fresh()]);
+    }
+
+    public function destroyFlashcard(Request $request, Collection $collection)
+    {
+        $data = $request->validate([
+            'flashcard_id' => ['required', 'exists:flashcards,id'],
+        ]);
+
+        $flashcard = $collection->flashcards()->where('flashcards.id', $data['flashcard_id'])->firstOrFail();
+
+        $collection->flashcards()->detach($flashcard->id);
+
         return response()->noContent();
     }
 
