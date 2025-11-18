@@ -23,15 +23,13 @@ class CollectionController extends Controller
 
     public function index(Request $request)
     {
-        $userId = $request->user()?->id;
+        // $userId = $request->user()?->id;
+        $userId = 1;
 
         $data = $this->service->getAll(
             $request->query('owned-by'),
-            $request->query('tags'),
             $request->query('type'),
             $userId,
-            $request->query('sort-by', 'date'),
-            $request->query('sort-type', 'desc')
         );
 
         return $data;

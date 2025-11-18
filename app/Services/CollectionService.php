@@ -7,31 +7,18 @@ use App\Models\Collection;
 
 class CollectionService
 {
-  public function getAll($ownedBy, $tags, $type, $userId, $sortBy = 'date', $sortType = 'desc')
+  public function getAll($ownedBy, $type, $userId)
   {
-    $query = Collection::query()
-      ->withCount('flashcards') // eager-load flashcards if you want them in resource
-      // filter by explicit owner (owned-by param)
-      ->when($ownedBy, function ($q) use ($ownedBy) {
-        $q->where('owner_id', $ownedBy);
-      })
-      // filter by tags (simple LIKE search on tags column)
-      ->when($tags !== '', function ($q) use ($tags) {
-        $tagList = array_filter(array_map('trim', explode(',', $tags)));
+    $collection = Collection::query()->with([
+      'owner',
+      'flashcards',
+    ])->withCount([
+          'flashcards',
+        ]);
 
-        if (!empty($tagList)) {
-          $q->where(function ($inner) use ($tagList) {
-            foreach ($tagList as $tag) {
-              $inner->orWhere('tags', 'like', "%{$tag}%");
-            }
-          });
-        }
-      });
-
-    // TYPE FILTERS
-    $query
-      // owned by current user (if owned-by is not used)
-      ->when($type === 'owned' && !$ownedBy && $userId, function ($q) use ($userId) {
+    $collection
+      // no type -> all collections that the user has access to
+      ->when($userId && $type === null, function ($q) use ($userId) {
         $q->where('owner_id', $userId);
       })
       // public collections
@@ -57,39 +44,89 @@ class CollectionService
         });
       });
 
-    // SORTING
-    switch ($sortBy) {
-      case 'views':
-        // map "views" to played_count
-        $query->orderBy('played_count', $sortType);
-        break;
+    return $collection->get();
+    // $query = Collection::query()
+    //   ->withCount('flashcards') // eager-load flashcards if you want them in resource
+    //   // filter by explicit owner (owned-by param)
+    //   ->when($ownedBy, function ($q) use ($ownedBy) {
+    //     $q->where('owner_id', $ownedBy);
+    //   })
+    //   // filter by tags (simple LIKE search on tags column)
+    //   ->when($tags !== '', function ($q) use ($tags) {
+    //     $tagList = array_filter(array_map('trim', explode(',', $tags)));
 
-      case 'favorite':
-        // map "favorite" to favorited_count
-        $query->orderBy('favorited_count', $sortType);
-        break;
+    //     if (!empty($tagList)) {
+    //       $q->where(function ($inner) use ($tagList) {
+    //         foreach ($tagList as $tag) {
+    //           $inner->orWhere('tags', 'like', "%{$tag}%");
+    //         }
+    //       });
+    //     }
+    //   });
 
-      case 'date':
-      default:
-        // default: sort by created_at
-        $query->orderBy('created_at', $sortType);
-        break;
-    }
+    // // TYPE FILTERS
+    // $query
+    //   // owned by current user (if owned-by is not used)
+    //   ->when($type === 'owned' && !$ownedBy && $userId, function ($q) use ($userId) {
+    //     $q->where('owner_id', $userId);
+    //   })
+    //   // public collections
+    //   ->when($type === 'public', function ($q) {
+    //     $q->where('access_level', 'public');
+    //   })
+    //   // shared with me (via collection_access_users pivot)
+    //   ->when($type === 'shared with me' && $userId, function ($q) use ($userId) {
+    //     $q->whereHas('accessUsers', function ($sub) use ($userId) {
+    //       $sub->whereKey($userId); // users.id = $userId
+    //     });
+    //   })
+    //   // favorited by current user (via favorited_collections pivot)
+    //   ->when($type === 'favorited' && $userId, function ($q) use ($userId) {
+    //     $q->whereHas('favorites', function ($sub) use ($userId) {
+    //       $sub->whereKey($userId);
+    //     });
+    //   })
+    //   // recently viewed by current user (via recent_collections pivot)
+    //   ->when($type === 'recently' && $userId, function ($q) use ($userId) {
+    //     $q->whereHas('recents', function ($sub) use ($userId) {
+    //       $sub->whereKey($userId);
+    //     });
+    //   });
 
-    return $query->get();
+    // // SORTING
+    // switch ($sortBy) {
+    //   case 'views':
+    //     // map "views" to played_count
+    //     $query->orderBy('played_count', $sortType);
+    //     break;
+
+    //   case 'favorite':
+    //     // map "favorite" to favorited_count
+    //     $query->orderBy('favorited_count', $sortType);
+    //     break;
+
+    //   case 'date':
+    //   default:
+    //     // default: sort by created_at
+    //     $query->orderBy('created_at', $sortType);
+    //     break;
+    // }
+
+    // return $query->get();
   }
 
-  public function getById($id) {
+  public function getById($id)
+  {
     $collection = Collection::with([
       'owner',
       'flashcards',
-        ])
-        ->withCount([
-            'flashcards',
-            'favorites',
-            'recents',
-        ])
-        ->findOrFail($id);
+    ])
+      ->withCount([
+        'flashcards',
+        'favorites',
+        'recents',
+      ])
+      ->findOrFail($id);
     return $collection;
   }
 
