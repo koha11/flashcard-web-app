@@ -184,9 +184,9 @@ class CollectionService
     return $collection->load('flashcards');
   }
 
-  public function addFlashcard(Collection $collection, array $flashcardIds)
+  public function addFlashcard(Collection $collection, $flashcardId)
   {
-    $collection->flashcards()->attach($flashcardIds);
+    $collection->flashcards()->attach($flashcardId);
     return $collection->fresh();
   }
 
