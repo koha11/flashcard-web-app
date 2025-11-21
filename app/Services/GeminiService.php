@@ -54,5 +54,9 @@ class GeminiService
     // standard place for text output in Gemini responses
     return $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
   }
+
+  public function autoGenBaseOnTagsAndDescription($tags, $description) {
+    $prompt = "Tags: {$tags}\nMô tả: {$description}\n\nHãy tạo flashcard phù hợp.";
+  }
 }
 ?>
