@@ -16,22 +16,22 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/', function () {
-    return view('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+// Route::get('/', function () {
+//     return view('Welcome', [
+//         'canLogin' => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//         'laravelVersion' => Application::VERSION,
+//         'phpVersion' => PHP_VERSION,
+//     ]);
+// });
 
-Route::get('/demo', action: fn() => view('Demo/Index'))->name('demo.index');
-Route::post('/demo/post-paragraph', action: [ParagraphController::class, 'post'])->name('demo.post-paragraph');
+// Route::get('/demo', action: fn() => view('Demo/Index'))->name('demo.index');
+// Route::post('/demo/post-paragraph', action: [ParagraphController::class, 'post'])->name('demo.post-paragraph');
 
 
-Route::get('/dashboard', function () {
-    return view('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return view('Dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
 
 
@@ -41,4 +41,4 @@ Route::get('/dashboard', function () {
 //     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 // });
 
-require __DIR__ . '/auth.php';
+// require __DIR__ . '/auth.php';
