@@ -116,7 +116,7 @@ class CollectionService
     // return $query->get();
   }
 
-  public function getById($id)
+  public function getById($id, $userId)
   {
     $collection = Collection::with([
       'owner',
@@ -128,6 +128,11 @@ class CollectionService
         'recents',
       ])
       ->findOrFail($id);
+
+    if ($collection and $collection->get('viewed_count') !== $userId) {
+      $this->updateRecentCollections($collection, $userId);
+    }
+
     return $collection;
   }
 
@@ -182,6 +187,17 @@ class CollectionService
 
     $collection->flashcards()->sync($flashcardIds);
     return $collection->load('flashcards');
+  }
+
+  public function updateRecentCollections(Collection $collection, $userId)
+  {
+    $collection->updateOrFail(["viewed_count" => $collection->viewed_count + 1]);
+
+    $collection->recents()->syncWithoutDetaching([
+      $userId => ['viewed_date' => now()],
+    ]);
+
+    return $collection;
   }
 
   public function addFlashcard(Collection $collection, $flashcardId)

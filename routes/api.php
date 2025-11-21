@@ -22,8 +22,6 @@ Route::prefix('collections')->group(function () {
 
     Route::delete("/{collection}/remove", [CollectionController::class, 'destroy']);
     Route::delete("/{collection}/remove-flashcard/{flashcard_id}", [CollectionController::class, 'destroyFlashcard']);
-
-
 });
 
 Route::prefix('auth')->group(function () {

@@ -58,9 +58,10 @@ class CollectionController extends Controller
         return $this->service->create($data);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
-        $collection = $this->service->getById($id);
+        $userId = $request->user()->user->id ?? 1;
+        $collection = $this->service->getById($id, $userId);
         return $collection;
     }
 
