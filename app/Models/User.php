@@ -43,4 +43,10 @@ class User extends Model
             ->withPivot('viewed_date');
     }
 
+    public function account()
+    {
+        return $this->hasOne(Account::class, 'id', 'id');
+    }
+
+
 }
