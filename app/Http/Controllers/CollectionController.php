@@ -53,7 +53,7 @@ class CollectionController extends Controller
             'flashcards.*.definition' => ['required', 'string', 'max:50'],
         ]);
         // Test create collection with default onwer_id = 1
-        $data['owner_id'] = $data['owner_id'] ?? $request->user()->id ?? 1;
+        $data['owner_id'] = $data['owner_id'] ?? $request->user()->user->id ?? 1;
 
         return $this->service->create($data);
     }
@@ -159,5 +159,20 @@ class CollectionController extends Controller
         $data = json_decode($answer, true);
 
         return json_encode(compact('data'));
+    }
+
+    public function autoGenBaseOnDescription(Request $request) {
+        $payload = $request->validate(
+            [
+                'description' => ['required', 'string'],
+            ]
+        );
+
+        $response =  $this->geminiService->autoGenBaseOnDescription($payload['description']);
+
+        $data = json_decode($response, true);
+
+        return json_encode(compact('data'), JSON_UNESCAPED_UNICODE);
+
     }
 }
