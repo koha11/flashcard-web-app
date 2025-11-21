@@ -90,36 +90,25 @@ class CollectionController extends Controller
     public function storeFlashcards(Request $request, Collection $collection)
     {
         $data = $request->validate([
-            'flashcards' => ['required', 'array', 'min:1'],
-            'flashcards.*.term' => ['required', 'string', 'max:255'],
-            'flashcards.*.definition' => ['required', 'string'],
+            'term' => ['required', 'string', 'min:1', 'max:50'],
+            'definition' => ['required', 'string', 'min:1', 'max:50'],
         ]);
 
-        $flashcardIds = [];
-        $newFlashcards = [];
+        $flashcard = $this->flashcardService->create($data);
 
-        foreach ($data['flashcards'] as $flashcardData) {
-            $flashcard = $this->flashcardService->create($flashcardData);
-            $newFlashcards[] = $flashcard;
-            $flashcardIds[] = $flashcard->id;
-        }
-
-        $this->service->addFlashcard($collection, $flashcardIds);
-
-        // Return the newly added flashcards
-        return response()->json(['flashcards' => $newFlashcards]);
+        return $this->service->addFlashcard($collection, $flashcard->id);
     }
 
     public function updateFlashcard(Request $request, Collection $collection)
     {
         $data = $request->validate([
-            'flashcard_id' => ['required', 'exists:flashcards,id'],
+            'id' => ['required', 'exists:flashcards,id'],
             'term' => ['required', 'string', 'max:255'],
             'definition' => ['required', 'string'],
         ]);
 
         $flashcard = $this->flashcardService->update(
-            $data['flashcard_id'],
+            $data['id'],
             [
                 'term' => $data['term'],
                 'definition' => $data['definition'],
