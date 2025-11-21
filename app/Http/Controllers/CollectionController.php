@@ -156,8 +156,8 @@ class CollectionController extends Controller
 
         $answer = $this->geminiService->prompt($payload['content'], $config);
 
-        $data = json_decode($answer, true);
+        $flashcards = json_decode($answer, true);
 
-        return json_encode(compact('data'));
+        return response()->json(compact('flashcards'));
     }
 }
