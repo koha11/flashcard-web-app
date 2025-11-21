@@ -16,7 +16,7 @@ class Collection extends Model
         'description',
         'owner_id',
         'access_level',
-        'played_count',
+        'viewed_count',
         'favorited_count',
     ];
 

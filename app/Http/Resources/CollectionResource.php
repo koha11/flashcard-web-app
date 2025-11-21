@@ -14,7 +14,7 @@ class CollectionResource extends JsonResource
       'tags' => $this->tags,
       'owner_id' => $this->owner_id,
       'access_level' => $this->access_level,
-      'played_count' => $this->played_count,
+      'viewed_count' => $this->viewed_count,
       'favorited_count' => $this->favorited_count,
       'created_at' => $this->created_at,
       'updated_at' => $this->updated_at,

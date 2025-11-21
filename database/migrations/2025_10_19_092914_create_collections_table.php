@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->string('tags')->nullable();
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete()->restrictOnUpdate();
             $table->enum('access_level', ['private', 'public', 'restrict'])->default('private');
-            $table->unsignedInteger('played_count')->default(0);
+            $table->unsignedInteger('viewed_count')->default(0);
             $table->unsignedInteger('favorited_count')->default(0);
             $table->timestamps();
             $table->softDeletes(); // <— NEW

@@ -18,7 +18,7 @@ class CollectionFactory extends Factory
             'tags' => $this->faker->optional()->words(3, true), // e.g. "English,Dev,Remote"
             'owner_id' => User::factory(),
             'access_level' => $this->faker->randomElement(['private', 'public', 'restrict']),
-            'played_count' => $this->faker->numberBetween(0, 500),
+            'viewed_count' => $this->faker->numberBetween(0, 500),
             'favorited_count' => $this->faker->numberBetween(0, 500),
         ];
     }
