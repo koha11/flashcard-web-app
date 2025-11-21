@@ -67,13 +67,13 @@ class CollectionController extends Controller
     public function update(Request $request, Collection $collection)
     {
         $data = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'tags' => ['sometimes', 'nullable', 'string'],
-            'access_level' => ['sometimes', 'required', Rule::in(['private', 'public', 'shared'])],
+            // 'access_level' => ['sometimes', 'required', Rule::in(['private', 'public', 'shared'])],
             'owner_id' => ['prohibited'], // avoid changing ownership via API
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:50'],
-            'flashcards.*.definition' => ['required', 'string', 'max:50'],
+            'flashcards.*.definition' => ['required', 'string', 'max:500'],
         ]);
 
         $result = $this->service->update($collection, $data);
@@ -161,14 +161,15 @@ class CollectionController extends Controller
         return response()->json(compact('flashcards'));
     }
 
-    public function autoGenBaseOnDescription(Request $request) {
+    public function autoGenBaseOnDescription(Request $request)
+    {
         $payload = $request->validate(
             [
                 'description' => ['required', 'string'],
             ]
         );
 
-        $response =  $this->geminiService->autoGenBaseOnDescription($payload['description']);
+        $response = $this->geminiService->autoGenBaseOnDescription($payload['description']);
 
         $data = json_decode($response, true);
 

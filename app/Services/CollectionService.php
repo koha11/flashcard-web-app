@@ -138,13 +138,13 @@ class CollectionService
 
     $collection = Collection::create($data);
 
-    if(!empty($flashcards)) {
+    if (!empty($flashcards)) {
       $flashcardIds = [];
 
       foreach ($flashcards as $fc) {
         $flashcard = Flashcard::create([
           'term' => $fc['term'],
-          'definition' => $fc['definition'],    
+          'definition' => $fc['definition'],
         ]);
         $flashcardIds[] = $flashcard->id;
       }
@@ -155,19 +155,19 @@ class CollectionService
 
   public function update(Collection $collection, array $data)
   {
-    $collection->update($data);
+    $collection->updateOrFail(["name" => $data["name"], "tags" => $data["tags"]]);
 
     $flashcards = $data['flashcards'] ?? [];
 
-    if(!empty($flashcards)) {
+    if (!empty($flashcards)) {
       $flashcardIds = [];
       foreach ($flashcards as $fc) {
         if (isset($fc['id'])) {
           $flashcard = Flashcard::find($fc['id']);
-            $flashcard->update([
-                'term' => $fc['term'],
-                'definition' => $fc['definition'],
-            ]);
+          $flashcard->update([
+            'term' => $fc['term'],
+            'definition' => $fc['definition'],
+          ]);
           $flashcardIds[] = $flashcard->id;
 
         } else {
