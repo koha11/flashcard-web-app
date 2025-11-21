@@ -15,7 +15,7 @@ Route::prefix('collections')->group(function () {
     Route::post('/', [CollectionController::class, 'store']);
     Route::post('/extract-paragraph', [CollectionController::class, 'extract']);
     Route::post('/auto-gen', [CollectionController::class, 'autoGenBaseOnDescription']);
-    Route::post('/{collection}/add-flashcard', [CollectionController::class, 'storeFlashcards']);
+    Route::post('/{collection}/add-flashcard', [CollectionController::class, 'storeFlashcard']);
 
     Route::put('/{collection}/edit', [CollectionController::class, 'update']);
     Route::put('/{collection}/edit-flashcard', action: [CollectionController::class, 'updateFlashcard']);

@@ -87,7 +87,7 @@ class CollectionController extends Controller
         return response()->noContent();
     }
 
-    public function storeFlashcards(Request $request, Collection $collection)
+    public function storeFlashcard(Request $request, Collection $collection)
     {
         $data = $request->validate([
             'term' => ['required', 'string', 'min:1', 'max:50'],
