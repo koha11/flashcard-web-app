@@ -3,7 +3,6 @@ namespace App\Services;
 
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
-
 class GeminiService
 {
   private string $apiKey;
@@ -55,8 +54,12 @@ class GeminiService
     return $json['candidates'][0]['content']['parts'][0]['text'] ?? '';
   }
 
-  public function autoGenBaseOnTagsAndDescription($tags, $description) {
-    $prompt = "Tags: {$tags}\nMô tả: {$description}\n\nHãy tạo flashcard phù hợp.";
+  public function autoGenBaseOnDescription(string $description) {
+    $prompt = "Mô tả: {$description}\n\nHãy tạo các flashcard phù hợp theo mô tả này.";
+
+    $config = config('gemini.autogen_base_on_tags');
+
+    return $this->prompt($prompt, $config);
   }
 }
 ?>
