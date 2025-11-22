@@ -12,23 +12,28 @@ use App\Http\Controllers\FlashcardController;
 Route::prefix('collections')->group(function () {
     Route::get('/', [CollectionController::class, 'index']);
     Route::get('/{collection}', [CollectionController::class, 'show']);
-    Route::post('/', [CollectionController::class, 'store']);
-    Route::post('/extract-paragraph', [CollectionController::class, 'extract']);
-    Route::post('/auto-gen', [CollectionController::class, 'autoGenBaseOnDescription']);
-    Route::post('/{collection}/add-flashcard', [CollectionController::class, 'storeFlashcard']);
 
-    Route::put('/{collection}/edit', [CollectionController::class, 'update']);
-    Route::put('/{collection}/edit-flashcard', action: [CollectionController::class, 'updateFlashcard']);
+    // Require auth
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/', [CollectionController::class, 'store']);
+        Route::post('/extract-paragraph', [CollectionController::class, 'extract']);
+        Route::post('/auto-gen', [CollectionController::class, 'autoGenBaseOnDescription']);
+        Route::post('/{collection}/add-flashcard', [CollectionController::class, 'storeFlashcard']);
 
-    Route::delete("/{collection}/remove", [CollectionController::class, 'destroy']);
-    Route::delete("/{collection}/remove-flashcard/{flashcard_id}", [CollectionController::class, 'destroyFlashcard']);
+        Route::put('/{collection}/edit', [CollectionController::class, 'update']);
+        Route::put('/{collection}/edit-flashcard', action: [CollectionController::class, 'updateFlashcard']);
+
+        Route::delete("/{collection}/remove", [CollectionController::class, 'destroy']);
+        Route::delete("/{collection}/remove-flashcard/{flashcard_id}", [CollectionController::class, 'destroyFlashcard']);
+    });
+    
 });
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/signup', [AuthController::class, 'signup']);
 
-    // Routes require token
+    // Require auth
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
