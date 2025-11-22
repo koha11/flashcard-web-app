@@ -46,14 +46,13 @@ class CollectionController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'tags' => ['sometimes', 'nullable', 'string'],
             'description' => ['sometimes', 'nullable', 'string'],
-            'owner_id' => ['nullable', 'exists:users,id'],
             'access_level' => ['sometimes', Rule::in(['private', 'public', 'shared'])],
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:50'],
             'flashcards.*.definition' => ['required', 'string', 'max:50'],
         ]);
-        // Test create collection with default onwer_id = 1
-        $data['owner_id'] = $data['owner_id'] ?? $request->user()->user->id ?? 1;
+        
+        $data['owner_id'] = $request->user()->user->id;
 
         return $this->service->create($data);
     }
@@ -96,7 +95,7 @@ class CollectionController extends Controller
         ]);
 
         $flashcard = $this->flashcardService->create($data);
-
+        
         return $this->service->addFlashcard($collection, $flashcard->id);
     }
 
