@@ -28,8 +28,8 @@ class CollectionController extends Controller
 
     public function index(Request $request)
     {
-        // $userId = $request->user()?->id;
-        $userId = 1;
+        $userId = $request->user()->user->id;
+      
 
         $data = $this->service->getAll(
             $request->query('owned-by'),
@@ -43,13 +43,13 @@ class CollectionController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:250'],
             'tags' => ['sometimes', 'nullable', 'string'],
             'description' => ['sometimes', 'nullable', 'string'],
             'access_level' => ['sometimes', Rule::in(['private', 'public', 'shared'])],
             'flashcards' => ['required', 'array'],
-            'flashcards.*.term' => ['required', 'string', 'max:50'],
-            'flashcards.*.definition' => ['required', 'string', 'max:50'],
+            'flashcards.*.term' => ['required', 'string', 'max:255'],
+            'flashcards.*.definition' => ['required', 'string', 'max:255'],
         ]);
         
         $data['owner_id'] = $request->user()->user->id;
@@ -67,13 +67,13 @@ class CollectionController extends Controller
     public function update(Request $request, Collection $collection)
     {
         $data = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:250'],
             'tags' => ['sometimes', 'nullable', 'string'],
             // 'access_level' => ['sometimes', 'required', Rule::in(['private', 'public', 'shared'])],
             'owner_id' => ['prohibited'], // avoid changing ownership via API
             'flashcards' => ['required', 'array'],
-            'flashcards.*.term' => ['required', 'string', 'max:50'],
-            'flashcards.*.definition' => ['required', 'string', 'max:500'],
+            'flashcards.*.term' => ['required', 'string', 'max:255'],
+            'flashcards.*.definition' => ['required', 'string', 'max:255'],
         ]);
 
         $result = $this->service->update($collection, $data);
@@ -90,8 +90,8 @@ class CollectionController extends Controller
     public function storeFlashcard(Request $request, Collection $collection)
     {
         $data = $request->validate([
-            'term' => ['required', 'string', 'min:1', 'max:50'],
-            'definition' => ['required', 'string', 'min:1', 'max:50'],
+            'term' => ['required', 'string', 'min:1', 'max:255'],
+            'definition' => ['required', 'string', 'min:1', 'max:255'],
         ]);
 
         $flashcard = $this->flashcardService->create($data);
