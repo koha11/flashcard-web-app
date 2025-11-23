@@ -13,7 +13,7 @@ return new class extends Migration {
             $table->string('description');
             $table->string('tags')->nullable();
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete()->restrictOnUpdate();
-            $table->enum('access_level', ['private', 'public', 'restrict'])->default('private');
+            $table->enum('access_level', ['private', 'public', 'shared'])->default('private');
             $table->unsignedInteger('viewed_count')->default(0);
             $table->unsignedInteger('favorited_count')->default(0);
             $table->timestamps();
