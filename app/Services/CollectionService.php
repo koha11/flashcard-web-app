@@ -121,6 +121,7 @@ class CollectionService
     $collection = Collection::with([
       'owner',
       'flashcards',
+      'accessUsers'
     ])
       ->withCount([
         'flashcards',
@@ -214,6 +215,7 @@ class CollectionService
 
   public function delete(Collection $collection)
   {
+    $collection->flashcards()->delete();
     return $collection->delete();
   }
 }
