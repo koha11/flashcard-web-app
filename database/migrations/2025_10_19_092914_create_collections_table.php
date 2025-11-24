@@ -10,10 +10,10 @@ return new class extends Migration {
         Schema::create('collections', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('description');
+            $table->string('description')->nullable();
             $table->string('tags')->nullable();
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete()->restrictOnUpdate();
-            $table->enum('access_level', ['private', 'public', 'restrict'])->default('private');
+            $table->enum('access_level', ['private', 'public', 'shared'])->default('private');
             $table->unsignedInteger('viewed_count')->default(0);
             $table->unsignedInteger('favorited_count')->default(0);
             $table->timestamps();
