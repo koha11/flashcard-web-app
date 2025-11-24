@@ -39,6 +39,17 @@ class CollectionController extends Controller
 
         return $data;
     }
+    public function search(Request $request)
+    {
+        $filters = [
+            'q' => $request->query('q'),
+            'term_min' => $request->query('term_min'),
+            'term_max' => $request->query('term_max'),
+            'sort' => $request->query('sort'),
+        ];
+
+        return response()->json($this->service->search($filters));
+    }
 
     public function store(Request $request)
     {
@@ -59,8 +70,8 @@ class CollectionController extends Controller
 
     public function show(Request $request, $id)
     {
-        $userId = $request->user()->user->id ?? 1;
-        $collection = $this->service->getById($id, $userId);
+        // $userId = $request->user()->user->id ?? 1;
+        $collection = $this->service->getById($id);
         return $collection;
     }
 
@@ -69,7 +80,7 @@ class CollectionController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:250'],
             'tags' => ['sometimes', 'nullable', 'string'],
-            // 'access_level' => ['sometimes', 'required', Rule::in(['private', 'public', 'shared'])],
+            'access_level' => [ 'required', Rule::in(['private', 'public', 'shared'])],
             'owner_id' => ['prohibited'], // avoid changing ownership via API
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:255'],
