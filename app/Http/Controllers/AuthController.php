@@ -2,10 +2,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Account;
+use App\Models\EmailVerification;
 use App\Services\AccountService;
 use App\Services\UserService;
+use App\Services\VerificationMailerService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
+use Str;
 
 class AuthController extends Controller
 {
@@ -13,10 +18,13 @@ class AuthController extends Controller
   protected AccountService $accountService;
   protected UserService $userService;
 
-  public function __construct(AccountService $accountService, UserService $userService)
+  protected VerificationMailerService $mailer;
+
+  public function __construct(AccountService $accountService, UserService $userService, VerificationMailerService $mailer)
   {
     $this->accountService = $accountService;
     $this->userService = $userService;
+    $this->mailer = $mailer;
   }
 
   public function me(Request $request)
@@ -66,18 +74,30 @@ class AuthController extends Controller
       'dob' => $data['dob'],
     ]);
 
-    $data['id'] = $user->id;
+    $user->account()->create([
+      'email' => $data['email'],
+      'password' => bcrypt($data['password']),
+    ]);
 
-    $account = $this->accountService->create($data);
+    $token = Str::random(64);
 
-    // Tạo token để client lưu (localStorage / cookie)
-    $token = $account->createToken('access_token')->plainTextToken;
+    EmailVerification::create([
+      'user_id' => $user->id,
+      'token' => $token,
+      'expires_at' => Carbon::now()->addDay(), // 24h
+    ]);
+
+    $sent = $this->mailer->sendVerificationLink($user, $token);
+
+    if (!$sent) {
+      throw ValidationException::withMessages([
+        'email' => ['Cannot send verification email. Please try again later.'],
+      ]);
+    }
 
     return response()->json([
-      'account' => $account,
-      'user' => $account->user,
-      'token' => $token,
-    ]);
+      'message' => 'Registered successfully. Please check your email to verify your account.',
+    ], 201);
   }
 
   public function logout(Request $request)

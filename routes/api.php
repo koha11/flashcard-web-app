@@ -1,13 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CollectionFlashcardController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\EmailVerificationController;
 use Illuminate\Support\Facades\Route;
 
-use App\Http\Controllers\HealthController;
 use App\Http\Controllers\CollectionController;
-use App\Http\Controllers\FlashcardController;
 
 Route::prefix('collections')->group(function () {
     Route::get('/search', [CollectionController::class, 'search']);
@@ -27,12 +24,13 @@ Route::prefix('collections')->group(function () {
         Route::delete("/{collection}", [CollectionController::class, 'destroy']);
         Route::delete("/{collection}/remove-flashcard/{flashcard_id}", [CollectionController::class, 'destroyFlashcard']);
     });
-    
+
 });
 
 Route::prefix('auth')->group(function () {
     Route::post('/login', [AuthController::class, 'login']);
     Route::post('/signup', [AuthController::class, 'signup']);
+    Route::post('/email/verify', [EmailVerificationController::class, 'verify']);
 
     // Require auth
     Route::middleware('auth:sanctum')->group(function () {
