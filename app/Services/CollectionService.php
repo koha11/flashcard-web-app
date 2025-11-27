@@ -115,8 +115,56 @@ class CollectionService
 
     // return $query->get();
   }
+  
+  public function search(array $filters)
+  {
+    $query = $filters['q'] ?? null;
+    $termMin = $filters['term_min'] ?? null;
+    $termMax = $filters['term_max'] ?? null;
+    $sort = $filters['sort'] ?? 'latest';  
 
-  public function getById($id, $userId)
+    $collections = Collection::query()
+        ->where('access_level', 'public')
+        ->when($query, function ($q) use ($query) {
+            $q->where(function ($sub) use ($query) {
+                $sub->where('name', 'like', "%{$query}%");
+            });
+        })
+        ->when($termMin, function ($q) use ($termMin) {
+            $q->where('flashcards_count', '>=', $termMin);
+        })
+        ->when($termMax, function ($q) use ($termMax) {
+            $q->where('flashcards_count', '<=', $termMax);
+        })
+        ->when($sort, function ($q) use ($sort) {
+            switch ($sort) {
+                case 'favorited':
+                    $q->orderBy('favorited_count', 'desc');
+                    break;
+                case 'played':
+                    $q->orderBy('played_count', 'desc');
+                    break;
+                case 'flashcards':
+                    $q->orderBy('flashcards_count', 'desc');
+                    break;
+                case 'oldest':
+                    $q->orderBy('created_at', 'asc');
+                    break;
+                case 'latest':
+                default:
+                    $q->orderBy('created_at', 'desc');
+                    break;
+            }
+        })
+
+        ->paginate(12);
+
+    return $collections;
+  }
+
+
+
+  public function getById($id)
   {
     $collection = Collection::with([
       'owner',
@@ -130,9 +178,9 @@ class CollectionService
       ])
       ->findOrFail($id);
 
-    if ($collection and $collection->get('viewed_count') !== $userId) {
-      $this->updateRecentCollections($collection, $userId);
-    }
+    // if ($collection and $collection->get('viewed_count') !== $userId) {
+    //   $this->updateRecentCollections($collection, $userId);
+    // }
 
     return $collection;
   }
@@ -161,7 +209,8 @@ class CollectionService
 
   public function update(Collection $collection, array $data)
   {
-    $collection->updateOrFail(["name" => $data["name"], "tags" => $data["tags"]]);
+    $collection->fill($data);
+    $collection->save();
 
     $flashcards = $data['flashcards'] ?? [];
 
