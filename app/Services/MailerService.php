@@ -7,14 +7,11 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 use Illuminate\Support\Facades\Config;
 
-class VerificationMailerService
+class MailerService
 {
-  public function sendVerificationLink(User $user, string $token): bool
+  public function sendMail(User $user, string $body, string $subject): bool
   {
     $config = Config::get('phpmailer');
-
-    // Link goes to frontend, not backend route
-    $verifyUrl = rtrim($config['frontend_url'], '/') . '/verify-email?token=' . urlencode($token);
 
     $mail = new PHPMailer(true);
 
@@ -32,25 +29,34 @@ class VerificationMailerService
       $mail->setFrom($config['from_email'], $config['from_name']);
       $mail->addAddress($user->email, $user->name ?? '');
 
-      $displayName = $user->name ?? $user->email;
-
       $mail->isHTML(true);
-      $mail->Subject = 'Verify your account';
-      $mail->Body = '
-                Hi ' . htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8') . ',<br><br>
-                Please click the link below to verify your account:<br>
-                <a href="' . $verifyUrl . '">' . $verifyUrl . '</a><br><br>
-                If you did not create an account, please ignore this email.
-            ';
-
-      $mail->AltBody = "Hi {$displayName},\n\n"
-        . "Please open this link to verify your account:\n{$verifyUrl}\n\n"
-        . "If you did not create an account, please ignore this email.";
+      $mail->Subject = $subject;
+      $mail->Body = $body;
 
       return $mail->send();
     } catch (Exception $e) {
       logger()->error('PHPMailer error: ' . $mail->ErrorInfo);
       return false;
     }
+  }
+  public function sendVerificationLink(User $user, string $token): bool
+  {
+    $config = Config::get('phpmailer');
+
+    // Link goes to frontend, not backend route
+    $verifyUrl = rtrim($config['frontend_url'], '/') . '/verify-email?token=' . urlencode($token);
+
+    $displayName = $user->name ?? $user->email;
+
+    $body = '
+        Hi ' . htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8') . ',<br><br>
+        Please click the link below to verify your account:<br>
+        <a href="' . $verifyUrl . '">' . $verifyUrl . '</a><br><br>
+        If you did not create an account, please ignore this email.
+    ';
+
+    $subject = 'Verify your account';
+
+    return $this->sendMail($user, $body, $subject);
   }
 }
