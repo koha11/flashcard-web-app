@@ -59,4 +59,21 @@ class MailerService
 
     return $this->sendMail($user, $body, $subject);
   }
+
+  public function sendResetPassword(User $user, string $newPassword): bool
+  {
+    // Link goes to frontend, not backend route
+    $displayName = $user->name ?? $user->email;
+
+    $body = '
+        Hi ' . htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8') . ',<br><br>
+        Your password has been reset. Your new password is:<br>
+        <strong>' . htmlspecialchars($newPassword, ENT_QUOTES, 'UTF-8') . '</strong><br><br>
+        Please change your password after logging in.
+    ';
+
+    $subject = 'Reset your password';
+
+    return $this->sendMail($user, $body, $subject);
+  }
 }

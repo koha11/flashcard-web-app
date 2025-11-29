@@ -28,8 +28,9 @@ Route::prefix('collections')->group(function () {
 });
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/signup', [AuthController::class, 'signup']);
+    Route::post('/login', action: [AuthController::class, 'login']);
+    Route::post('/signup', action: [AuthController::class, 'signup']);
+    Route::post('/forgot-password', action: [AuthController::class, 'forgotPassword']);
     Route::post('/email/verify', [EmailVerificationController::class, 'verify']);
 
     // Require auth

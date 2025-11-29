@@ -1,12 +1,12 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Models\EmailVerification;
 use App\Services\AccountService;
 use App\Services\UserService;
-use App\Services\VerificationMailerService;
+use App\Services\MailerService;
 use Carbon\Carbon;
+use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -18,9 +18,9 @@ class AuthController extends Controller
   protected AccountService $accountService;
   protected UserService $userService;
 
-  protected VerificationMailerService $mailer;
+  protected MailerService $mailer;
 
-  public function __construct(AccountService $accountService, UserService $userService, VerificationMailerService $mailer)
+  public function __construct(AccountService $accountService, UserService $userService, MailerService $mailer)
   {
     $this->accountService = $accountService;
     $this->userService = $userService;
@@ -98,6 +98,34 @@ class AuthController extends Controller
     return response()->json([
       'message' => 'Registered successfully. Please check your email to verify your account.',
     ], 201);
+  }
+
+  public function forgotPassword(Request $request)
+  {
+    $data = $request->validate([
+      'email' => ['required', 'email'],
+    ]);
+
+    $account = $this->accountService->findByEmail($data['email']);
+
+    if (!$account) {
+      return response([
+        'message' => 'Your email address is not registered in our system.',
+      ], 404);
+    }
+
+    // Just set new password for user directly for simplicity
+    $newPassword = Str::random(12);
+
+    $this->accountService->update($account, [
+      'password' => $newPassword,
+    ]);
+
+    $this->mailer->sendResetPassword($account->user, $newPassword);
+
+    return response()->json([
+      'message' => 'If that email address is in our system, we have emailed you a password reset link.',
+    ]);
   }
 
   public function logout(Request $request)

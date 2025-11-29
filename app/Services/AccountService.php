@@ -17,9 +17,14 @@ class AccountService
     return Account::findOrFail($id);
   }
 
+  public function findByEmail(string $email)
+  {
+    return Account::where('email', $email)->first();
+  }
+
   public function create(array $data)
   {
-  
+
     if (isset($data['password'])) {
       $data['password'] = Hash::make($data['password']);
     }
@@ -31,7 +36,7 @@ class AccountService
   {
     $data['password'] = Hash::make($data['password']);
     $account->update($data);
-    
+
 
     return $account->fresh();
   }
