@@ -1,12 +1,12 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Account;
 use App\Models\EmailVerification;
 use App\Services\AccountService;
 use App\Services\UserService;
-use App\Services\VerificationMailerService;
+use App\Services\MailerService;
 use Carbon\Carbon;
+use Hash;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
@@ -17,10 +17,9 @@ class AuthController extends Controller
 
   protected AccountService $accountService;
   protected UserService $userService;
+  protected MailerService $mailer;
 
-  protected VerificationMailerService $mailer;
-
-  public function __construct(AccountService $accountService, UserService $userService, VerificationMailerService $mailer)
+  public function __construct(AccountService $accountService, UserService $userService, MailerService $mailer)
   {
     $this->accountService = $accountService;
     $this->userService = $userService;
@@ -49,6 +48,13 @@ class AuthController extends Controller
     }
     /** @var \App\Models\Account $account */
     $account = Auth::user();
+
+    if (!$account->email_verified_at) {
+      return response()->json([
+        'message' => 'Please verify your email address before logging in.',
+        'isEmailVerified' => false,
+      ], 200);
+    }
     // Tạo token để client lưu (localStorage / cookie)
     $token = $account->createToken('access_token')->plainTextToken;
 
@@ -98,6 +104,59 @@ class AuthController extends Controller
     return response()->json([
       'message' => 'Registered successfully. Please check your email to verify your account.',
     ], 201);
+  }
+
+  public function forgotPassword(Request $request)
+  {
+    $data = $request->validate([
+      'email' => ['required', 'email'],
+    ]);
+
+    $account = $this->accountService->findByEmail($data['email']);
+
+    if (!$account) {
+      return response([
+        'message' => 'Your email address is not registered in our system.',
+      ], 404);
+    }
+
+    // Just set new password for user directly for simplicity
+    $newPassword = Str::random(12);
+
+    $this->accountService->update($account, [
+      'password' => $newPassword,
+    ]);
+
+    $this->mailer->sendResetPassword($account->user, $newPassword);
+
+    return response()->json([
+      'message' => 'If that email address is in our system, we have emailed you a password reset link.',
+    ]);
+  }
+
+  public function changePassword(Request $request)
+  {
+    $data = $request->validate([
+      'current_password' => ['required'],
+      'new_password' => ['required', 'min:6'],
+    ]);
+
+    /** @var \App\Models\Account $account */
+    $account = $request->user();
+
+    if (!Hash::check($data['current_password'], $account->password)) {
+      throw ValidationException::withMessages([
+        'current_password' => ['Current password is incorrect.'],
+      ]);
+    }
+
+    $this->accountService->update($account, [
+      'password' => $data['new_password'],
+    ]);
+
+    return response()->json([
+      'message' => 'Password changed successfully.',
+    ]);
   }
 
   public function logout(Request $request)

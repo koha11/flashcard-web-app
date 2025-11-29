@@ -4,11 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\EmailVerification;
+use App\Services\AccountService;
+use App\Services\MailerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
 class EmailVerificationController extends Controller
 {
+    protected AccountService $accountService;
+    protected MailerService $mailer;
+
+
+    public function __construct(AccountService $accountService, MailerService $mailer)
+    {
+        $this->accountService = $accountService;
+        $this->mailer = $mailer;
+    }
+
     public function verify(Request $request)
     {
         $data = $request->validate([
@@ -37,15 +49,59 @@ class EmailVerificationController extends Controller
             ], 404);
         }
 
+        $account = $user->account;
+
         // Mark user as verified
-        $user->email_verified_at = Carbon::now();
-        $user->save();
+        $account->email_verified_at = Carbon::now();
+        $account->save();
 
         // Delete token
         $record->delete();
 
+        $token = $account->createToken('access_token')->plainTextToken;
+
+        return response([
+            'account' => $account,
+            'user' => $account->user,
+            'token' => $token,
+        ], 200);
+    }
+
+    public function check(Request $request)
+    {
+
+        $data = $request->validate([
+            'email' => ['required', 'string', "email"],
+        ]);
+
+        $account = $this->accountService->findByEmail($data['email']);
+
+        $record = EmailVerification::whereHas('account', function ($query) use ($data) {
+            $query->where('email', $data['email']);
+        })->first();
+
+        if (!$record) {
+            return response()->json([
+                'message' => 'No pending verification found for this email.',
+            ], 404);
+        }
+
+        if ($record->expires_at->isPast()) {
+            $record->delete();
+
+            $newRecord = EmailVerification::create([
+                'user_id' => $account->user->id,
+                'token' => \Illuminate\Support\Str::random(64),
+                'expires_at' => Carbon::now()->addDay(),
+            ]);
+
+            $this->mailer->sendVerificationLink($account->user, $newRecord->token);
+        } else {
+            $this->mailer->sendVerificationLink($account->user, $record->token);
+        }
+
         return response()->json([
-            'message' => 'Email verified successfully.',
+            'message' => 'Verification email resent if there was a pending verification.',
         ]);
     }
 }

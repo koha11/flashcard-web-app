@@ -28,12 +28,15 @@ Route::prefix('collections')->group(function () {
 });
 
 Route::prefix('auth')->group(function () {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/signup', [AuthController::class, 'signup']);
-    Route::post('/email/verify', [EmailVerificationController::class, 'verify']);
+    Route::post('/login', action: [AuthController::class, 'login']);
+    Route::post('/signup', action: [AuthController::class, 'signup']);
+    Route::post('/forgot-password', action: [AuthController::class, 'forgotPassword']);
+    Route::post('/email/verify', action: [EmailVerificationController::class, 'verify']);
+    Route::post('/email/check', action: [EmailVerificationController::class, 'check']);
 
     // Require auth
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/change-password', action: [AuthController::class, 'changePassword']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
     });
