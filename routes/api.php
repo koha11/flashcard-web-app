@@ -35,6 +35,7 @@ Route::prefix('auth')->group(function () {
 
     // Require auth
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/change-password', action: [AuthController::class, 'changePassword']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/me', [AuthController::class, 'me']);
     });
