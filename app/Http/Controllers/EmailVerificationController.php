@@ -58,9 +58,13 @@ class EmailVerificationController extends Controller
         // Delete token
         $record->delete();
 
-        return response()->json([
-            'message' => 'Email verified successfully.',
-        ]);
+        $token = $account->createToken('access_token')->plainTextToken;
+
+        return response([
+            'account' => $account,
+            'user' => $account->user,
+            'token' => $token,
+        ], 200);
     }
 
     public function check(Request $request)
