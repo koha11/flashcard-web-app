@@ -31,7 +31,8 @@ Route::prefix('auth')->group(function () {
     Route::post('/login', action: [AuthController::class, 'login']);
     Route::post('/signup', action: [AuthController::class, 'signup']);
     Route::post('/forgot-password', action: [AuthController::class, 'forgotPassword']);
-    Route::post('/email/verify', [EmailVerificationController::class, 'verify']);
+    Route::post('/email/verify', action: [EmailVerificationController::class, 'verify']);
+    Route::post('/email/check', action: [EmailVerificationController::class, 'check']);
 
     // Require auth
     Route::middleware('auth:sanctum')->group(function () {

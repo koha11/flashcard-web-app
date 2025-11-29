@@ -17,7 +17,6 @@ class AuthController extends Controller
 
   protected AccountService $accountService;
   protected UserService $userService;
-
   protected MailerService $mailer;
 
   public function __construct(AccountService $accountService, UserService $userService, MailerService $mailer)
@@ -49,6 +48,13 @@ class AuthController extends Controller
     }
     /** @var \App\Models\Account $account */
     $account = Auth::user();
+
+    if (!$account->email_verified_at) {
+      return response()->json([
+        'message' => 'Please verify your email address before logging in.',
+        'isEmailVerified' => false,
+      ], 200);
+    }
     // Tạo token để client lưu (localStorage / cookie)
     $token = $account->createToken('access_token')->plainTextToken;
 
@@ -128,7 +134,8 @@ class AuthController extends Controller
     ]);
   }
 
-  public function changePassword(Request $request) {
+  public function changePassword(Request $request)
+  {
     $data = $request->validate([
       'current_password' => ['required'],
       'new_password' => ['required', 'min:6'],
