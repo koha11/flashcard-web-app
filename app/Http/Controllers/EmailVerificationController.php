@@ -37,9 +37,11 @@ class EmailVerificationController extends Controller
             ], 404);
         }
 
+        $account = $user->account;
+
         // Mark user as verified
-        $user->email_verified_at = Carbon::now();
-        $user->save();
+        $account->email_verified_at = Carbon::now();
+        $account->save();
 
         // Delete token
         $record->delete();
