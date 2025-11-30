@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
 use App\Models\Flashcard;
+use App\Models\User;
 
 class CollectionService
 {
@@ -182,7 +183,7 @@ class CollectionService
 
 
 
-  public function getById($id)
+  public function getById($id, $userId = null)
   {
     $collection = Collection::with([
       'owner',
@@ -196,9 +197,11 @@ class CollectionService
       ])
       ->findOrFail($id);
 
-    // if ($collection and $collection->get('viewed_count') !== $userId) {
-    //   $this->updateRecentCollections($collection, $userId);
-    // }
+    if($userId) {
+      if ($collection and $collection->get('viewed_count') !== $userId) {
+        $this->updateRecentCollections($collection, $userId);
+      }
+    }
 
     return $collection;
   }
@@ -231,17 +234,19 @@ class CollectionService
     $collection->save();
 
     $flashcards = $data['flashcards'] ?? [];
-
+    $access_users = $data['access_users'] ?? [];
     if (!empty($flashcards)) {
       $flashcardIds = [];
       foreach ($flashcards as $fc) {
         if (isset($fc['id'])) {
           $flashcard = Flashcard::find($fc['id']);
-          $flashcard->update([
-            'term' => $fc['term'],
-            'definition' => $fc['definition'],
-          ]);
-          $flashcardIds[] = $flashcard->id;
+          if($flashcard) {
+            $flashcard->update([
+              'term' => $fc['term'],
+              'definition' => $fc['definition'],
+            ]);
+            $flashcardIds[] = $flashcard->id;
+          }
 
         } else {
           $flashcard = Flashcard::create([
@@ -254,6 +259,18 @@ class CollectionService
     }
 
     $collection->flashcards()->sync($flashcardIds);
+    if(!empty($access_users)) {
+      $accessUserIds = [];
+      foreach ($access_users as $au) {
+        if(isset($au['id'])) {
+          $user = User::find($au['id']);
+          if ($user) {
+            $accessUserIds[] = $user->id;
+          }
+        }
+      }
+      $collection->accessUsers()->sync($accessUserIds);
+    }
     return $collection->load('flashcards');
   }
 

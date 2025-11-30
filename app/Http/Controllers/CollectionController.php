@@ -41,8 +41,6 @@ class CollectionController extends Controller
     }
     public function search(Request $request)
     {
-       
-
         return response()->json($this->service->search($request->all()));
     }
 
@@ -65,8 +63,9 @@ class CollectionController extends Controller
 
     public function show(Request $request, $id)
     {
-        // $userId = $request->user()->user->id ?? 1;
-        $collection = $this->service->getById($id);
+        $account = $request->user();
+        $userId = $account ? $account->user->id : null;
+        $collection = $this->service->getById($id, $userId);
         return $collection;
     }
 
@@ -76,6 +75,7 @@ class CollectionController extends Controller
             'name' => ['required', 'string', 'max:250'],
             'tags' => ['sometimes', 'nullable', 'string'],
             'access_level' => [ 'required', Rule::in(['private', 'public', 'shared'])],
+            'access_users' => ['sometimes', 'nullable', 'array'],
             'owner_id' => ['prohibited'], // avoid changing ownership via API
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:255'],
