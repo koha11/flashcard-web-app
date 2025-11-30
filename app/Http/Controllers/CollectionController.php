@@ -69,9 +69,10 @@ class CollectionController extends Controller
 
     public function show(Request $request, $id)
     {
-        $account = $request->user();
-        $userId = $account ? $account->user->id : null;
-        $collection = $this->service->getById($id, $userId);
+        $data = $request->validate([
+            'user_id' => ['sometimes', 'integer', 'exists:users,id'],
+        ]);
+        $collection = $this->service->getById($id, $data['user_id'] ?? null);
         return $collection;
     }
 

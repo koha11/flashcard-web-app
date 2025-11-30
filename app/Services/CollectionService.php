@@ -153,6 +153,7 @@ class CollectionService
       $collection->is_favorited = $isFavorited;
     } else {
       $collection->is_favorited = false;
+      $collection->userId = $userId;
     }
 
     return $collection;
