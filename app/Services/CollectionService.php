@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
 use App\Models\Flashcard;
+use App\Models\User;
 
 class CollectionService
 {
@@ -161,6 +162,8 @@ class CollectionService
   {
     $flashcards = $data['flashcards'] ?? [];
     unset($data['flashcards']);
+    unset($data['flashcards']);
+    $access_users = $data['access_users'] ?? [];
 
     $collection = Collection::create($data);
 
@@ -176,6 +179,18 @@ class CollectionService
       }
       $collection->flashcards()->attach($flashcardIds);
     }
+    if(!empty($access_users)) {
+      $accessUserIds = [];
+      foreach ($access_users as $au) {
+        if(isset($au['id'])) {
+          $user = User::find($au['id']);
+          if ($user) {
+            $accessUserIds[] = $user->id;
+          }
+        }
+      }
+      $collection->accessUsers()->sync($accessUserIds);
+    }
     return $collection->load('flashcards');
   }
 
@@ -185,17 +200,19 @@ class CollectionService
     $collection->save();
 
     $flashcards = $data['flashcards'] ?? [];
-
+    $access_users = $data['access_users'] ?? [];
     if (!empty($flashcards)) {
       $flashcardIds = [];
       foreach ($flashcards as $fc) {
         if (isset($fc['id'])) {
           $flashcard = Flashcard::find($fc['id']);
-          $flashcard->update([
-            'term' => $fc['term'],
-            'definition' => $fc['definition'],
-          ]);
-          $flashcardIds[] = $flashcard->id;
+          if($flashcard) {
+            $flashcard->update([
+              'term' => $fc['term'],
+              'definition' => $fc['definition'],
+            ]);
+            $flashcardIds[] = $flashcard->id;
+          }
 
         } else {
           $flashcard = Flashcard::create([
@@ -208,6 +225,18 @@ class CollectionService
     }
 
     $collection->flashcards()->sync($flashcardIds);
+    if(!empty($access_users)) {
+      $accessUserIds = [];
+      foreach ($access_users as $au) {
+        if(isset($au['id'])) {
+          $user = User::find($au['id']);
+          if ($user) {
+            $accessUserIds[] = $user->id;
+          }
+        }
+      }
+      $collection->accessUsers()->sync($accessUserIds);
+    }
     return $collection->load('flashcards');
   }
 

@@ -56,6 +56,7 @@ class CollectionController extends Controller
             'tags' => ['sometimes', 'nullable', 'string'],
             'description' => ['sometimes', 'nullable', 'string'],
             'access_level' => ['sometimes', Rule::in(['private', 'public', 'shared'])],
+            'access_users' => ['sometimes', 'nullable', 'array'],
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:255'],
             'flashcards.*.definition' => ['required', 'string', 'max:255'],
@@ -68,8 +69,9 @@ class CollectionController extends Controller
 
     public function show(Request $request, $id)
     {
-        $data = $request->validate(["user_id" => ["sometimes", "integer", "exists:users,id"]]);
-        $collection = $this->service->getById($id, $data['user_id'] ?? null);
+        $account = $request->user();
+        $userId = $account ? $account->user->id : null;
+        $collection = $this->service->getById($id, $userId);
         return $collection;
     }
 
