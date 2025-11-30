@@ -15,16 +15,17 @@ class CollectionService
 
     ])->withCount([
           'flashcards',
+          'favorites',
         ]);
 
     // add isFavorited flag per collection for the given user
     if ($userId) {
       $collection->select('collections.*')
-        ->selectRaw('(exists(select 1 from favorited_collections where favorited_collections.collection_id = collections.id and favorited_collections.user_id = ?)) as isFavorited', [$userId]);
+        ->selectRaw('(exists(select 1 from favorited_collections where favorited_collections.collection_id = collections.id and favorited_collections.user_id = ?)) as is_favorited', [$userId]);
     } else {
       // no user -> always false
       $collection->select('collections.*')
-        ->selectRaw('0 as isFavorited');
+        ->selectRaw('0 as is_favorited');
     }
 
     $collection
@@ -59,7 +60,7 @@ class CollectionService
 
     // normalize to boolean for JSON consumers (cast from 0/1)
     $results->transform(function ($item) {
-      $item->isFavorited = (bool) ($item->isFavorited ?? false);
+      $item->is_favorited = (bool) ($item->is_favorited ?? false);
       return $item;
     });
 
@@ -214,6 +215,25 @@ class CollectionService
     $collection->recents()->syncWithoutDetaching([
       $userId => ['viewed_date' => now()],
     ]);
+
+    return $collection;
+  }
+
+  public function updateFavoritedCollections(Collection $collection, $userId, bool $favorite)
+  {
+    if (!$favorite) {
+      $collection->favorites()->detach($userId);
+      $collection->favorited_count = max(0, $collection->favorited_count - 1);
+      $collection->save();
+      return $collection;
+    }
+
+    $collection->favorites()->syncWithoutDetaching([
+      $userId => ['favorited_date' => now()],
+    ]);
+
+    $collection->favorited_count = $collection->favorited_count + 1;
+    $collection->save();
 
     return $collection;
   }

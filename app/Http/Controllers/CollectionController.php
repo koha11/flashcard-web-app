@@ -46,8 +46,6 @@ class CollectionController extends Controller
     }
     public function search(Request $request)
     {
-
-
         return response()->json($this->service->search($request->all()));
     }
 
@@ -139,6 +137,18 @@ class CollectionController extends Controller
         return response()->noContent();
     }
 
+    public function favorite(Request $request, Collection $collection)
+    {
+        $userId = $request->user()->user->id;
+
+        $data = $request->validate([
+            'favorite' => ['required', 'boolean'],
+        ]);
+
+        $this->service->updateFavoritedCollections($collection, $userId, $data['favorite']);
+        return response()->json(['message' => 'Collection favorited successfully.']);
+    }
+
     public function extract(Request $request)
     {
         $payload = $request->validate(['content' => ['required', 'string']]);
@@ -185,6 +195,5 @@ class CollectionController extends Controller
         $data = json_decode($response, true);
 
         return json_encode(compact('data'), JSON_UNESCAPED_UNICODE);
-
     }
 }
