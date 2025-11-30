@@ -5,6 +5,7 @@ use App\Http\Controllers\EmailVerificationController;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\UserController;
 
 Route::prefix('collections')->group(function () {
     Route::get('/search', [CollectionController::class, 'search']);
@@ -25,6 +26,14 @@ Route::prefix('collections')->group(function () {
         Route::delete("/{collection}/remove-flashcard/{flashcard_id}", [CollectionController::class, 'destroyFlashcard']);
     });
 
+});
+
+
+Route::prefix('users')->group(function () {
+    
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('/', action: [UserController::class, 'getByEmail']);
+    });
 });
 
 Route::prefix('auth')->group(function () {
