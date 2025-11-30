@@ -18,6 +18,8 @@ Route::prefix('collections')->group(function () {
         Route::post('/extract-paragraph', [CollectionController::class, 'extract']);
         Route::post('/auto-gen', [CollectionController::class, 'autoGenBaseOnDescription']);
         Route::post('/{collection}/flashcards', [CollectionController::class, 'storeFlashcard']);
+        Route::post('/{collection}/favorite', [CollectionController::class, 'favorite']);
+
 
         Route::put('/{collection}', [CollectionController::class, 'update']);
         Route::put('/{collection}/flashcards', action: [CollectionController::class, 'updateFlashcard']);

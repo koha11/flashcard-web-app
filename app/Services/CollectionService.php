@@ -13,10 +13,20 @@ class CollectionService
   {
     $collection = Collection::query()->with([
       'owner',
-  
+      'flashcards',
     ])->withCount([
           'flashcards',
         ]);
+
+    // add isFavorited flag per collection for the given user
+    if ($userId) {
+      $collection->select('collections.*')
+        ->selectRaw('(exists(select 1 from favorited_collections where favorited_collections.collection_id = collections.id and favorited_collections.user_id = ?)) as is_favorited', [$userId]);
+    } else {
+      // no user -> always false
+      $collection->select('collections.*')
+        ->selectRaw('0 as is_favorited');
+    }
 
     $collection
       // no type -> all collections that the user has access to
@@ -46,144 +56,84 @@ class CollectionService
         });
       });
 
-    return $collection->get();
-    // $query = Collection::query()
-    //   ->withCount('flashcards') // eager-load flashcards if you want them in resource
-    //   // filter by explicit owner (owned-by param)
-    //   ->when($ownedBy, function ($q) use ($ownedBy) {
-    //     $q->where('owner_id', $ownedBy);
-    //   })
-    //   // filter by tags (simple LIKE search on tags column)
-    //   ->when($tags !== '', function ($q) use ($tags) {
-    //     $tagList = array_filter(array_map('trim', explode(',', $tags)));
+    $results = $collection->get();
 
-    //     if (!empty($tagList)) {
-    //       $q->where(function ($inner) use ($tagList) {
-    //         foreach ($tagList as $tag) {
-    //           $inner->orWhere('tags', 'like', "%{$tag}%");
-    //         }
-    //       });
-    //     }
-    //   });
+    // normalize to boolean for JSON consumers (cast from 0/1)
+    $results->transform(function ($item) {
+      $item->is_favorited = (bool) ($item->is_favorited ?? false);
+      return $item;
+    });
 
-    // // TYPE FILTERS
-    // $query
-    //   // owned by current user (if owned-by is not used)
-    //   ->when($type === 'owned' && !$ownedBy && $userId, function ($q) use ($userId) {
-    //     $q->where('owner_id', $userId);
-    //   })
-    //   // public collections
-    //   ->when($type === 'public', function ($q) {
-    //     $q->where('access_level', 'public');
-    //   })
-    //   // shared with me (via collection_access_users pivot)
-    //   ->when($type === 'shared with me' && $userId, function ($q) use ($userId) {
-    //     $q->whereHas('accessUsers', function ($sub) use ($userId) {
-    //       $sub->whereKey($userId); // users.id = $userId
-    //     });
-    //   })
-    //   // favorited by current user (via favorited_collections pivot)
-    //   ->when($type === 'favorited' && $userId, function ($q) use ($userId) {
-    //     $q->whereHas('favorites', function ($sub) use ($userId) {
-    //       $sub->whereKey($userId);
-    //     });
-    //   })
-    //   // recently viewed by current user (via recent_collections pivot)
-    //   ->when($type === 'recently' && $userId, function ($q) use ($userId) {
-    //     $q->whereHas('recents', function ($sub) use ($userId) {
-    //       $sub->whereKey($userId);
-    //     });
-    //   });
-
-    // // SORTING
-    // switch ($sortBy) {
-    //   case 'views':
-    //     // map "views" to played_count
-    //     $query->orderBy('played_count', $sortType);
-    //     break;
-
-    //   case 'favorite':
-    //     // map "favorite" to favorited_count
-    //     $query->orderBy('favorited_count', $sortType);
-    //     break;
-
-    //   case 'date':
-    //   default:
-    //     // default: sort by created_at
-    //     $query->orderBy('created_at', $sortType);
-    //     break;
-    // }
-
-    // return $query->get();
+    return $results;
   }
-  
+
   public function search(array $filters)
   {
     $query = $filters['q'] ?? null;
     $terms = $filters['numberOfTerms'] ?? "all";
     $termMin = 0;
     $termMax = 100;
-    if($terms != "all") {
-      if($terms == "lessThan20") {
+    if ($terms != "all") {
+      if ($terms == "lessThan20") {
         $termMax = 19;
-      } else if($terms == "20To50") {
+      } else if ($terms == "20To50") {
         $termMin = 20;
         $termMax = 50;
       } else if ($terms == "greaterThan50") {
         $termMin = 50;
         $termMax = 100;
-      } 
+      }
     }
-    $sort = $filters['sort'] ?? 'latest';  
+    $sort = $filters['sort'] ?? 'latest';
 
     $collections = Collection::query()
-        ->where('access_level', 'public')
-        ->with(['owner'])
-        ->withCount([
+      ->where('access_level', 'public')
+      ->with(['owner'])
+      ->withCount([
         'flashcards',
         'favorites',
         'recents',
       ])
-        ->when($query, function ($q) use ($query) {
-            $q->where(function ($sub) use ($query) {
-                $sub->where('name', 'like', "%{$query}%");
-            });
-        })
-       ->when($termMin, function ($q) use ($termMin) {
-          $q->having('flashcards_count', '>=', $termMin);
-        })
-        ->when($termMax, function ($q) use ($termMax) {
-          $q->having('flashcards_count', '<=', $termMax);
-        })
-        ->when($sort, function ($q) use ($sort) {
-            switch ($sort) {
-                case 'favorite':
-                    $q->orderBy('favorited_count', 'desc');
-                    break;
-                case 'view':
-                    $q->orderBy('viewed_count', 'desc');
-                    break;
-                case 'terms':
-                    $q->orderBy('flashcards_count', 'desc');
-                    break;
-                case 'oldest':
-                    $q->orderBy('created_at', 'asc');
-                    break;
-                case 'latest':
-                default:
-                    $q->orderBy('created_at', 'desc');
-                    break;
-            }
-        }) 
+      ->when($query, function ($q) use ($query) {
+        $q->where(function ($sub) use ($query) {
+          $sub->where('name', 'like', "%{$query}%");
+        });
+      })
+      ->when($termMin, function ($q) use ($termMin) {
+        $q->having('flashcards_count', '>=', $termMin);
+      })
+      ->when($termMax, function ($q) use ($termMax) {
+        $q->having('flashcards_count', '<=', $termMax);
+      })
+      ->when($sort, function ($q) use ($sort) {
+        switch ($sort) {
+          case 'favorited':
+            $q->orderBy('favorited_count', 'desc');
+            break;
+          case 'played':
+            $q->orderBy('played_count', 'desc');
+            break;
+          case 'terms':
+            $q->orderBy('flashcards_count', 'desc');
+            break;
+          case 'oldest':
+            $q->orderBy('created_at', 'asc');
+            break;
+          case 'latest':
+          default:
+            $q->orderBy('created_at', 'desc');
+            break;
+        }
+      })
 
-        ->paginate(8);
+      ->paginate(2);
 
     return $collections;
   }
 
 
 
-  public function getById($id, $userId = null)
+  public function getById($id, $userId)
   {
     $collection = Collection::with([
       'owner',
@@ -197,10 +147,12 @@ class CollectionService
       ])
       ->findOrFail($id);
 
-    if($userId) {
-      if ($collection and $collection->get('viewed_count') !== $userId) {
-        $this->updateRecentCollections($collection, $userId);
-      }
+    if ($userId) {
+      $this->updateRecentCollections(collection: $collection, userId: $userId);
+      $isFavorited = $collection->favorites()->where('user_id', $userId)->exists();
+      $collection->is_favorited = $isFavorited;
+    } else {
+      $collection->is_favorited = false;
     }
 
     return $collection;
@@ -295,6 +247,25 @@ class CollectionService
     $collection->recents()->syncWithoutDetaching([
       $userId => ['viewed_date' => now()],
     ]);
+
+    return $collection;
+  }
+
+  public function updateFavoritedCollections(Collection $collection, $userId, bool $favorite)
+  {
+    if (!$favorite) {
+      $collection->favorites()->detach($userId);
+      $collection->favorited_count = max(0, $collection->favorited_count - 1);
+      $collection->save();
+      return $collection;
+    }
+
+    $collection->favorites()->syncWithoutDetaching([
+      $userId => ['favorited_date' => now()],
+    ]);
+
+    $collection->favorited_count = $collection->favorited_count + 1;
+    $collection->save();
 
     return $collection;
   }

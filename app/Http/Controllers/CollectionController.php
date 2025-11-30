@@ -29,15 +29,20 @@ class CollectionController extends Controller
     public function index(Request $request)
     {
         $userId = $request->user()->user->id;
-      
+
+        $data = $request->validate([
+            'owned-by' => ['sometimes', 'integer', 'exists:users,id'],
+            'type' => ['sometimes', 'string', Rule::in(['public', 'shared with me', 'favorited', 'recently'])],
+        ]);
+
 
         $data = $this->service->getAll(
-            $request->query('owned-by'),
-            $request->query('type'),
+            $data['owned-by'] ?? null,
+            $data['type'] ?? null,
             $userId,
         );
 
-        return $data;
+        return response()->json($data);
     }
     public function search(Request $request)
     {
@@ -56,7 +61,7 @@ class CollectionController extends Controller
             'flashcards.*.term' => ['required', 'string', 'max:255'],
             'flashcards.*.definition' => ['required', 'string', 'max:255'],
         ]);
-        
+
         $data['owner_id'] = $request->user()->user->id;
 
         return $this->service->create($data);
@@ -75,8 +80,7 @@ class CollectionController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:250'],
             'tags' => ['sometimes', 'nullable', 'string'],
-            'access_level' => [ 'required', Rule::in(['private', 'public', 'shared'])],
-            'access_users' => ['sometimes', 'nullable', 'array'],
+            'access_level' => ['required', Rule::in(['private', 'public', 'shared'])],
             'owner_id' => ['prohibited'], // avoid changing ownership via API
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:255'],
@@ -102,7 +106,7 @@ class CollectionController extends Controller
         ]);
 
         $flashcard = $this->flashcardService->create($data);
-        
+
         return $this->service->addFlashcard($collection, $flashcard->id);
     }
 
@@ -133,6 +137,18 @@ class CollectionController extends Controller
         $this->flashcardService->delete($flashcard_id);
 
         return response()->noContent();
+    }
+
+    public function favorite(Request $request, Collection $collection)
+    {
+        $userId = $request->user()->user->id;
+
+        $data = $request->validate([
+            'favorite' => ['required', 'boolean'],
+        ]);
+
+        $this->service->updateFavoritedCollections($collection, $userId, $data['favorite']);
+        return response()->json(['message' => 'Collection favorited successfully.']);
     }
 
     public function extract(Request $request)
@@ -181,6 +197,5 @@ class CollectionController extends Controller
         $data = json_decode($response, true);
 
         return json_encode(compact('data'), JSON_UNESCAPED_UNICODE);
-
     }
 }
