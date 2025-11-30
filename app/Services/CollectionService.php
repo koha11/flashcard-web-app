@@ -12,7 +12,7 @@ class CollectionService
   {
     $collection = Collection::query()->with([
       'owner',
-      'flashcards',
+  
     ])->withCount([
           'flashcards',
         ]);
@@ -119,22 +119,40 @@ class CollectionService
   public function search(array $filters)
   {
     $query = $filters['q'] ?? null;
-    $termMin = $filters['term_min'] ?? null;
-    $termMax = $filters['term_max'] ?? null;
+    $terms = $filters['numberOfTerms'] ?? "all";
+    $termMin = 0;
+    $termMax = 100;
+    if($terms != "all") {
+      if($terms == "lessThan20") {
+        $termMax = 19;
+      } else if($terms == "20To50") {
+        $termMin = 20;
+        $termMax = 50;
+      } else if ($terms == "greaterThan50") {
+        $termMin = 50;
+        $termMax = 100;
+      } 
+    }
     $sort = $filters['sort'] ?? 'latest';  
 
     $collections = Collection::query()
         ->where('access_level', 'public')
+        ->with(['owner'])
+        ->withCount([
+        'flashcards',
+        'favorites',
+        'recents',
+      ])
         ->when($query, function ($q) use ($query) {
             $q->where(function ($sub) use ($query) {
                 $sub->where('name', 'like', "%{$query}%");
             });
         })
-        ->when($termMin, function ($q) use ($termMin) {
-            $q->where('flashcards_count', '>=', $termMin);
+       ->when($termMin, function ($q) use ($termMin) {
+          $q->having('flashcards_count', '>=', $termMin);
         })
         ->when($termMax, function ($q) use ($termMax) {
-            $q->where('flashcards_count', '<=', $termMax);
+          $q->having('flashcards_count', '<=', $termMax);
         })
         ->when($sort, function ($q) use ($sort) {
             switch ($sort) {
@@ -144,7 +162,7 @@ class CollectionService
                 case 'played':
                     $q->orderBy('played_count', 'desc');
                     break;
-                case 'flashcards':
+                case 'terms':
                     $q->orderBy('flashcards_count', 'desc');
                     break;
                 case 'oldest':
@@ -155,9 +173,9 @@ class CollectionService
                     $q->orderBy('created_at', 'desc');
                     break;
             }
-        })
+        }) 
 
-        ->paginate(12);
+        ->paginate(2);
 
     return $collections;
   }

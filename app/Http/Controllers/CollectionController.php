@@ -41,14 +41,9 @@ class CollectionController extends Controller
     }
     public function search(Request $request)
     {
-        $filters = [
-            'q' => $request->query('q'),
-            'term_min' => $request->query('term_min'),
-            'term_max' => $request->query('term_max'),
-            'sort' => $request->query('sort'),
-        ];
+       
 
-        return response()->json($this->service->search($filters));
+        return response()->json($this->service->search($request->all()));
     }
 
     public function store(Request $request)
