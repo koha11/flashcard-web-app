@@ -157,11 +157,11 @@ class CollectionService
         })
         ->when($sort, function ($q) use ($sort) {
             switch ($sort) {
-                case 'favorited':
+                case 'favorite':
                     $q->orderBy('favorited_count', 'desc');
                     break;
-                case 'played':
-                    $q->orderBy('played_count', 'desc');
+                case 'view':
+                    $q->orderBy('viewed_count', 'desc');
                     break;
                 case 'terms':
                     $q->orderBy('flashcards_count', 'desc');
@@ -176,7 +176,7 @@ class CollectionService
             }
         }) 
 
-        ->paginate(2);
+        ->paginate(8);
 
     return $collections;
   }
@@ -210,6 +210,8 @@ class CollectionService
   {
     $flashcards = $data['flashcards'] ?? [];
     unset($data['flashcards']);
+    unset($data['flashcards']);
+    $access_users = $data['access_users'] ?? [];
 
     $collection = Collection::create($data);
 
@@ -224,6 +226,18 @@ class CollectionService
         $flashcardIds[] = $flashcard->id;
       }
       $collection->flashcards()->attach($flashcardIds);
+    }
+    if(!empty($access_users)) {
+      $accessUserIds = [];
+      foreach ($access_users as $au) {
+        if(isset($au['id'])) {
+          $user = User::find($au['id']);
+          if ($user) {
+            $accessUserIds[] = $user->id;
+          }
+        }
+      }
+      $collection->accessUsers()->sync($accessUserIds);
     }
     return $collection->load('flashcards');
   }

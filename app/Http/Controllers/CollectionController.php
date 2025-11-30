@@ -51,6 +51,7 @@ class CollectionController extends Controller
             'tags' => ['sometimes', 'nullable', 'string'],
             'description' => ['sometimes', 'nullable', 'string'],
             'access_level' => ['sometimes', Rule::in(['private', 'public', 'shared'])],
+            'access_users' => ['sometimes', 'nullable', 'array'],
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:255'],
             'flashcards.*.definition' => ['required', 'string', 'max:255'],
