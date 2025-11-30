@@ -12,10 +12,9 @@ class CollectionService
   {
     $collection = Collection::query()->with([
       'owner',
-
+      'flashcards',
     ])->withCount([
           'flashcards',
-          'favorites',
         ]);
 
     // add isFavorited flag per collection for the given user
@@ -133,7 +132,7 @@ class CollectionService
 
 
 
-  public function getById($id)
+  public function getById($id, $userId)
   {
     $collection = Collection::with([
       'owner',
@@ -147,9 +146,13 @@ class CollectionService
       ])
       ->findOrFail($id);
 
-    // if ($collection and $collection->get('viewed_count') !== $userId) {
-    //   $this->updateRecentCollections($collection, $userId);
-    // }
+    if ($userId) {
+      $this->updateRecentCollections(collection: $collection, userId: $userId);
+      $isFavorited = $collection->favorites()->where('user_id', $userId)->exists();
+      $collection->is_favorited = $isFavorited;
+    } else {
+      $collection->is_favorited = false;
+    }
 
     return $collection;
   }
