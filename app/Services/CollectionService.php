@@ -6,6 +6,7 @@ use App\Http\Resources\CollectionResource;
 use App\Models\Collection;
 use App\Models\Flashcard;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 
 class CollectionService
 {
@@ -18,14 +19,13 @@ class CollectionService
           'flashcards',
         ]);
 
-    // add isFavorited flag per collection for the given user
+    // add is_favorited flag per collection for the given user
     if ($userId) {
-      $collection->select('collections.*')
-        ->selectRaw('(exists(select 1 from favorited_collections where favorited_collections.collection_id = collections.id and favorited_collections.user_id = ?)) as is_favorited', [$userId]);
+      $uid = (int) $userId;
+      $collection->addSelect(DB::raw("(exists(select 1 from favorited_collections where favorited_collections.collection_id = collections.id and favorited_collections.user_id = {$uid})) as is_favorited"));
     } else {
       // no user -> always false
-      $collection->select('collections.*')
-        ->selectRaw('0 as is_favorited');
+      $collection->addSelect(DB::raw('0 as is_favorited'));
     }
 
     $collection
@@ -61,6 +61,8 @@ class CollectionService
     // normalize to boolean for JSON consumers (cast from 0/1)
     $results->transform(function ($item) {
       $item->is_favorited = (bool) ($item->is_favorited ?? false);
+      // provide a stable numeric count field expected by frontend
+      $item->flashcard_counted = (int) ($item->flashcards_count ?? 0);
       return $item;
     });
 
@@ -107,11 +109,11 @@ class CollectionService
       })
       ->when($sort, function ($q) use ($sort) {
         switch ($sort) {
-          case 'favorite':
+          case 'favorited':
             $q->orderBy('favorited_count', 'desc');
             break;
-          case 'view':
-            $q->orderBy('viewed_count', 'desc');
+          case 'played':
+            $q->orderBy('played_count', 'desc');
             break;
           case 'terms':
             $q->orderBy('flashcards_count', 'desc');
@@ -126,7 +128,7 @@ class CollectionService
         }
       })
 
-      ->paginate(8);
+      ->paginate(2);
 
     return $collections;
   }
@@ -147,43 +149,17 @@ class CollectionService
       ])
       ->findOrFail($id);
 
-    // Public
-    if ($collection->access_level === 'public') {
-      return $this->buildResponse($collection, $userId, true, 'public');
-    }
-    
-    if ($userId) {
-      // Owner
-      if ($collection->owner_id == $userId) {
-        return $this->buildResponse($collection, $userId, true, 'owner');
-      }
-      // Shared access
-      $hasAccess = $collection->accessUsers()->where('user_id', $userId)->exists();
-      if ($hasAccess) {
-        return $this->buildResponse($collection, $userId, true, 'shared');
-      }
-      return $this->buildResponse($collection, $userId, false, 'forbidden');
-    } 
-    return $this->buildResponse($collection, null, false, 'forbidden');
-  }
-
-  private function buildResponse($collection, $userId, $allowed, $reason)
-  {
     if ($userId) {
       $this->updateRecentCollections(collection: $collection, userId: $userId);
-
-      $collection->is_favorited = $collection->favorites()->where('user_id', $userId)->exists();
+      $isFavorited = $collection->favorites()->where('user_id', $userId)->exists();
+      $collection->is_favorited = $isFavorited;
     } else {
       $collection->is_favorited = false;
+      $collection->userId = $userId;
     }
 
-    return [
-      'allowed' => $allowed,
-      'reason' => $reason,
-      'collection' => $collection,
-    ];
+    return $collection;
   }
-
 
   public function create(array $data)
   {
@@ -206,10 +182,10 @@ class CollectionService
       }
       $collection->flashcards()->attach($flashcardIds);
     }
-    if(!empty($access_users)) {
+    if (!empty($access_users)) {
       $accessUserIds = [];
       foreach ($access_users as $au) {
-        if(isset($au['id'])) {
+        if (isset($au['id'])) {
           $user = User::find($au['id']);
           if ($user) {
             $accessUserIds[] = $user->id;
@@ -233,7 +209,7 @@ class CollectionService
       foreach ($flashcards as $fc) {
         if (isset($fc['id'])) {
           $flashcard = Flashcard::find($fc['id']);
-          if($flashcard) {
+          if ($flashcard) {
             $flashcard->update([
               'term' => $fc['term'],
               'definition' => $fc['definition'],
@@ -252,10 +228,10 @@ class CollectionService
     }
 
     $collection->flashcards()->sync($flashcardIds);
-    if(!empty($access_users)) {
+    if (!empty($access_users)) {
       $accessUserIds = [];
       foreach ($access_users as $au) {
-        if(isset($au['id'])) {
+        if (isset($au['id'])) {
           $user = User::find($au['id']);
           if ($user) {
             $accessUserIds[] = $user->id;
