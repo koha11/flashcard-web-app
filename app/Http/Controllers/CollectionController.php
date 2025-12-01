@@ -91,6 +91,7 @@ class CollectionController extends Controller
             'name' => ['required', 'string', 'max:250'],
             'tags' => ['sometimes', 'nullable', 'string'],
             'access_level' => ['required', Rule::in(['private', 'public', 'shared'])],
+            'access_users' => ['sometimes', 'nullable', 'array'],
             'owner_id' => ['prohibited'], // avoid changing ownership via API
             'flashcards' => ['required', 'array'],
             'flashcards.*.term' => ['required', 'string', 'max:255'],
