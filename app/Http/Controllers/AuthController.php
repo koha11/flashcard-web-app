@@ -137,21 +137,21 @@ class AuthController extends Controller
   public function changePassword(Request $request)
   {
     $data = $request->validate([
-      'current_password' => ['required'],
-      'new_password' => ['required', 'min:6'],
+      'oldPassword' => ['required', 'min:6'],
+      'newPassword' => ['required', 'min:6'],
     ]);
 
     /** @var \App\Models\Account $account */
     $account = $request->user();
 
-    if (!Hash::check($data['current_password'], $account->password)) {
+    if (!Hash::check($data['oldPassword'], $account->password)) {
       throw ValidationException::withMessages([
-        'current_password' => ['Current password is incorrect.'],
+        'oldPassword' => ['Current password is incorrect.'],
       ]);
     }
 
     $this->accountService->update($account, [
-      'password' => $data['new_password'],
+      'password' => $data['newPassword'],
     ]);
 
     return response()->json([
