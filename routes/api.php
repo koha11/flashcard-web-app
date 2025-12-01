@@ -34,9 +34,10 @@ Route::prefix('collections')->group(function () {
 
 
 Route::prefix('users')->group(function () {
-    
+
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', action: [UserController::class, 'getByEmail']);
+        Route::post('/edit', action: [UserController::class, 'editUserInfo']);
     });
 });
 
