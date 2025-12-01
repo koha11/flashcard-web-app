@@ -9,7 +9,9 @@ use App\Http\Controllers\UserController;
 
 Route::prefix('collections')->group(function () {
     Route::get('/search', [CollectionController::class, 'search']);
-    Route::get('/{collection}', [CollectionController::class, 'show']);
+    Route::get('/{id}', [CollectionController::class, 'show']);
+
+
 
     // Require auth
     Route::middleware('auth:sanctum')->group(function () {

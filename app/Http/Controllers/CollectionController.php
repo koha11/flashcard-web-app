@@ -8,6 +8,7 @@ use App\Services\CollectionService;
 use App\Services\FlashcardService;
 use App\Services\GeminiService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
 class CollectionController extends Controller
@@ -72,8 +73,16 @@ class CollectionController extends Controller
         $data = $request->validate([
             'user_id' => ['sometimes', 'integer', 'exists:users,id'],
         ]);
-        $collection = $this->service->getById($id, $data['user_id'] ?? null);
-        return $collection;
+
+        $result = $this->service->getById($id, $data['user_id'] ?? null);
+        if (!$result['allowed']) {
+            if ($result['reason'] === 'forbidden') {
+                return response()->json(['message' => 'You do not have access'], 403);
+            }
+        }
+
+        return $result['collection'];
+        
     }
 
     public function update(Request $request, Collection $collection)

@@ -107,11 +107,11 @@ class CollectionService
       })
       ->when($sort, function ($q) use ($sort) {
         switch ($sort) {
-          case 'favorited':
+          case 'favorite':
             $q->orderBy('favorited_count', 'desc');
             break;
-          case 'played':
-            $q->orderBy('played_count', 'desc');
+          case 'view':
+            $q->orderBy('viewed_count', 'desc');
             break;
           case 'terms':
             $q->orderBy('flashcards_count', 'desc');
@@ -126,7 +126,7 @@ class CollectionService
         }
       })
 
-      ->paginate(2);
+      ->paginate(8);
 
     return $collections;
   }
@@ -147,17 +147,43 @@ class CollectionService
       ])
       ->findOrFail($id);
 
+    // Public
+    if ($collection->access_level === 'public') {
+      return $this->buildResponse($collection, $userId, true, 'public');
+    }
+    
+    if ($userId) {
+      // Owner
+      if ($collection->owner_id == $userId) {
+        return $this->buildResponse($collection, $userId, true, 'owner');
+      }
+      // Shared access
+      $hasAccess = $collection->accessUsers()->where('user_id', $userId)->exists();
+      if ($hasAccess) {
+        return $this->buildResponse($collection, $userId, true, 'shared');
+      }
+      return $this->buildResponse($collection, $userId, false, 'forbidden');
+    } 
+    return $this->buildResponse($collection, null, false, 'forbidden');
+  }
+
+  private function buildResponse($collection, $userId, $allowed, $reason)
+  {
     if ($userId) {
       $this->updateRecentCollections(collection: $collection, userId: $userId);
-      $isFavorited = $collection->favorites()->where('user_id', $userId)->exists();
-      $collection->is_favorited = $isFavorited;
+
+      $collection->is_favorited = $collection->favorites()->where('user_id', $userId)->exists();
     } else {
       $collection->is_favorited = false;
-      $collection->userId = $userId;
     }
 
-    return $collection;
+    return [
+      'allowed' => $allowed,
+      'reason' => $reason,
+      'collection' => $collection,
+    ];
   }
+
 
   public function create(array $data)
   {
