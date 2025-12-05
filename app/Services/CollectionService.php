@@ -109,30 +109,41 @@ class CollectionService
       })
       ->when($sort, function ($q) use ($sort) {
         switch ($sort) {
-          case 'favorited':
+          case 'favorite':
             $q->orderBy('favorited_count', 'desc');
             break;
-          case 'played':
-            $q->orderBy('played_count', 'desc');
+          case 'view':
+            $q->orderBy('viewed_count', 'desc');
             break;
           case 'terms':
             $q->orderBy('flashcards_count', 'desc');
-            break;
-          case 'oldest':
-            $q->orderBy('created_at', 'asc');
-            break;
-          case 'latest':
-          default:
-            $q->orderBy('created_at', 'desc');
-            break;
         }
       })
-
-      ->paginate(2);
+      ->paginate(8);
 
     return $collections;
   }
 
+  private function buildResponse($collection, $userId, $allowed, $reason)
+  {
+    if ($userId) {
+      $this->updateRecentCollections(collection: $collection, userId: $userId);
+      $isFavorited = $collection->favorites()->where('user_id', $userId)->exists();
+      $collection->is_favorited = $isFavorited;
+
+      $collection->is_favorited = $collection->favorites()->where('user_id', $userId)->exists();
+    } else {
+      $collection->is_favorited = false;
+      $collection->userId = $userId;
+    }
+
+  
+    return [
+      'allowed' => $allowed,
+      'reason' => $reason,
+      'collection' => $collection,
+    ];
+  }
 
 
   public function getById($id, $userId)
@@ -149,16 +160,24 @@ class CollectionService
       ])
       ->findOrFail($id);
 
-    if ($userId) {
-      $this->updateRecentCollections(collection: $collection, userId: $userId);
-      $isFavorited = $collection->favorites()->where('user_id', $userId)->exists();
-      $collection->is_favorited = $isFavorited;
-    } else {
-      $collection->is_favorited = false;
-      $collection->userId = $userId;
+    // Public
+    if ($collection->access_level === 'public') {
+      return $this->buildResponse($collection, $userId, true, 'public');
     }
-
-    return $collection;
+    
+    if ($userId) {
+      // Owner
+      if ($collection->owner_id == $userId) {
+        return $this->buildResponse($collection, $userId, true, 'owner');
+      }
+      // Shared access
+      $hasAccess = $collection->accessUsers()->where('user_id', $userId)->exists();
+      if ($hasAccess) {
+        return $this->buildResponse($collection, $userId, true, 'shared');
+      }
+      return $this->buildResponse($collection, $userId, false, 'forbidden');
+    } 
+    return $this->buildResponse($collection, null, false, 'forbidden');
   }
 
   public function create(array $data)
